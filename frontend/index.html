@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Organizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Space Grotesk', 'sans-serif'],
+            },
+            colors: {
+              // Base Neutral Palette
+              'sys-bg': '#F6F7F9',       // Manter (pedido do user)
+              'sys-card': '#FFFFFF',     // Manter
+              'sys-border': '#CCCCCC',   // Nova cor #CCCCCC
+              
+              // Text Palette
+              'sys-text-main': '#001f21', // Nova cor #001f21
+              'sys-text-sec': '#4B5563',
+              'sys-text-sub': '#9CA3AF',
+
+              // Dark Mode Palette
+              'dark-bg': '#0F172A',       // Manter (pedido do user)
+              'dark-card': '#1E293B',     // Manter
+              'dark-text': '#E5E7EB',
+              'dark-border': '#334155',
+
+              // Accent Palette (Atualizado para nova paleta)
+              'action-blue': '#029b99',  // Nova cor #029b99 (Teal Principal) - Mantendo nome da var para compatibilidade
+              'org-blue': '#006666',     // Nova cor #006666 (Dark Teal)
+              'terracotta': '#F95842',   // Nova cor #F95842 (Laranja Vibrante)
+              'calm-coral': '#F95842',   // Usando a mesma cor de destaque
+              'soft-lilac': '#7B6ED6',   // Nova cor #7B6ED6 (Roxo Vibrante)
+
+              // Utility aliases for compatibility if needed, mapped to new identity
+              primary: {
+                50: '#F0FDFD',
+                100: '#CCFBFB',
+                500: '#029b99', // action-blue
+                600: '#006666',
+                900: '#001f21',
+              }
+            },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom scrollbar for cleaner look */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #D1D5DB;
+        border-radius: 3px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #475569;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "date-fns/": "https://esm.sh/date-fns@^4.1.0/",
+    "date-fns": "https://esm.sh/date-fns@^4.1.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-sys-bg text-sys-text-main dark:bg-dark-bg dark:text-dark-text transition-colors duration-200 antialiased selection:bg-action-blue selection:text-white">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
