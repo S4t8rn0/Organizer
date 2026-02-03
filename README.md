@@ -15,16 +15,6 @@ Sistema completo de organização pessoal com gerenciamento de tarefas, notas, c
 - **Kanban** - Quadro de tarefas estilo kanban (To-Do, In Progress, Review, Done)
 - **Finanças** - Controle de transações, contas fixas e investimentos
 
-## 🛡️ Segurança
-
-O sistema inclui proteções robustas:
-
-- ✅ **Anti-Bruteforce** - Bloqueio após 5 tentativas de login falhas
-- ✅ **Rate Limiting** - Proteção contra DDoS e abusos
-- ✅ **Row Level Security (RLS)** - Isolamento de dados por usuário
-- ✅ **JWT Authentication** - Tokens seguros via Supabase Auth
-- ✅ **Helmet** - Headers de segurança HTTP
-- ✅ **CORS** - Controle de origens permitidas
 
 ## 🚀 Tecnologias
 
@@ -157,4 +147,4 @@ Este projeto está sob a licença MIT.
 
 ---
 
-Desenvolvido com ❤️
+Desenvolvido por Gabriella Fernandes.
