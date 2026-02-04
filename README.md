@@ -26,13 +26,11 @@ Sistema completo de organização pessoal com gerenciamento de tarefas, notas, c
 - Date-fns
 
 ### Backend
-- Node.js + Express
+- Node.js + Express (Vercel Serverless Functions)
 - TypeScript
 - Supabase (Auth + Database)
-- Express Rate Limit
-- Helmet
 
-## 📦 Instalação
+## 📦 Instalação Local
 
 ### Pré-requisitos
 - Node.js 18+
@@ -44,33 +42,33 @@ git clone https://github.com/S4t8rn0/Organizer.git
 cd Organizer
 ```
 
-### 2. Configure o Backend
+### 2. Instale as dependências
 ```bash
-cd backend
+# Dependências do backend (raiz)
 npm install
+
+# Dependências do frontend
+cd frontend
+npm install
+cd ..
 ```
 
-Crie um arquivo `.env` na pasta `backend`:
+### 3. Configure as variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto:
 ```env
-PORT=3001
 SUPABASE_URL=sua_url_supabase
 SUPABASE_ANON_KEY=sua_anon_key
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
 ```
 
-### 3. Configure o Banco de Dados
+### 4. Configure o Banco de Dados
 
 Execute o script `backend/database/schema.sql` no SQL Editor do Supabase.
 
-### 4. Configure o Frontend
-```bash
-cd ../frontend
-npm install
-```
+### 5. Inicie o projeto localmente
 
-### 5. Inicie o projeto
-
-**Terminal 1 - Backend:**
+**Terminal 1 - Backend (desenvolvimento local):**
 ```bash
 cd backend
 npm run dev
@@ -82,33 +80,51 @@ cd frontend
 npm run dev
 ```
 
-Acesse: http://localhost:3000
+Acesse: http://localhost:5173
+
+## 🌐 Deploy no Vercel
+
+Este projeto está configurado para deploy no Vercel com **Serverless Functions**.
+
+### 1. Faça fork/push do repositório para o GitHub
+
+### 2. Conecte ao Vercel
+1. Acesse [vercel.com](https://vercel.com) e faça login com GitHub
+2. Clique em **"New Project"**
+3. Importe o repositório **Organizer**
+
+### 3. Configure as variáveis de ambiente no Vercel
+| Key | Value |
+|-----|-------|
+| `SUPABASE_URL` | Sua URL do Supabase |
+| `SUPABASE_ANON_KEY` | Sua Anon Key do Supabase |
+| `FRONTEND_URL` | A URL do seu projeto Vercel (ex: `https://organizer.vercel.app`) |
+
+### 4. Deploy!
+O Vercel irá automaticamente:
+- Buildar o frontend (React/Vite)
+- Configurar as Serverless Functions (API)
+- Gerar uma URL pública
 
 ## 📁 Estrutura do Projeto
 
 ```
 organizer/
-├── backend/
+├── api/
+│   └── index.ts              # API Serverless (Vercel Functions)
+├── backend/                   # Backend original (desenvolvimento local)
 │   ├── database/
-│   │   ├── schema.sql          # Schema do banco de dados
+│   │   ├── schema.sql        # Schema do banco de dados
 │   │   └── fix_rls_policies.sql
-│   ├── src/
-│   │   ├── config/             # Configuração do Supabase
-│   │   ├── controllers/        # Controllers das rotas
-│   │   ├── middlewares/        # Auth, Rate Limit, Validação
-│   │   ├── routes/             # Definição das rotas
-│   │   ├── types/              # Tipos TypeScript
-│   │   └── app.ts              # Entry point
-│   └── package.json
-│
+│   └── src/
 ├── frontend/
-│   ├── components/             # Componentes reutilizáveis
-│   ├── contexts/               # Context API (Auth)
-│   ├── features/               # Páginas/Features
-│   ├── services/               # API client
-│   ├── App.tsx                 # App principal
-│   └── index.html              # Entry point
-│
+│   ├── components/           # Componentes reutilizáveis
+│   ├── contexts/             # Context API (Auth)
+│   ├── features/             # Páginas/Features
+│   ├── services/             # API client
+│   └── App.tsx               # App principal
+├── vercel.json               # Configuração Vercel
+├── package.json              # Dependências da API
 └── README.md
 ```
 
@@ -136,10 +152,8 @@ organizer/
 
 | Endpoint | Limite |
 |----------|--------|
-| Global | 1000 req/15min |
-| Auth | 50 req/15min |
-| Login | 10 req/15min |
-| Register | 5 req/hora |
+| Login | 5 tentativas antes de bloqueio de 30min |
+| Geral | Proteção contra abuso |
 
 ## 📝 Licença
 

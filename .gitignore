@@ -1,0 +1,41 @@
+# ============ DEPENDENCIES ============
+node_modules/
+
+# ============ BUILD OUTPUT ============
+dist/
+dist-ssr/
+.vercel/
+
+# ============ ENVIRONMENT VARIABLES ============
+.env
+.env.local
+.env.*.local
+*.local
+
+# ============ LOGS ============
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============ IDE / EDITOR ============
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*.sw?
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ============ OS FILES ============
+.DS_Store
+Thumbs.db
+
+# ============ MISC ============
+*.pem
