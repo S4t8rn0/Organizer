@@ -3,11 +3,6 @@
     "buildCommand": "cd frontend && npm install && npm run build",
     "outputDirectory": "frontend/dist",
     "installCommand": "npm install",
-    "functions": {
-        "api/index.ts": {
-            "runtime": "@vercel/node@3"
-        }
-    },
     "rewrites": [
         {
             "source": "/api/:path*",
