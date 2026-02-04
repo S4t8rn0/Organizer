@@ -2,20 +2,16 @@
     "version": 2,
     "buildCommand": "cd frontend && npm install && npm run build",
     "outputDirectory": "frontend/dist",
-    "builds": [
-        {
-            "src": "api/index.ts",
-            "use": "@vercel/node"
+    "installCommand": "npm install",
+    "functions": {
+        "api/index.ts": {
+            "runtime": "@vercel/node@3"
         }
-    ],
-    "routes": [
+    },
+    "rewrites": [
         {
-            "src": "/api/(.*)",
-            "dest": "/api/index.ts"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/$1"
+            "source": "/api/:path*",
+            "destination": "/api/index.ts"
         }
     ]
 }
