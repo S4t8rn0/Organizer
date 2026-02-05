@@ -178,7 +178,7 @@ const Planner: React.FC<PlannerProps> = ({
                     : 'border-sys-border dark:border-dark-border'}`}
               >
                 {/* Column Header */}
-                <div className={`p-4 text-center border-b ${isToday ? 'bg-org-blue/5 dark:bg-org-blue/10' : 'border-sys-border dark:border-dark-border'}`}>
+                <div className={`p-2 text-center border-b ${isToday ? 'bg-org-blue/5 dark:bg-org-blue/10' : 'border-sys-border dark:border-dark-border'}`}>
                   <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isToday ? 'text-action-blue dark:text-action-blue' : 'text-sys-text-sub'}`}>
                     {format(day, 'EEE', { locale: ptBR })}
                   </p>
