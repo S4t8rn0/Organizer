@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task, Priority, Category } from '../types';
-import { Plus, Trash2, Tag, Calendar as CalendarIcon, Filter, CheckSquare, Square, Pencil, X } from 'lucide-react';
+import { Plus, Trash2, Tag, Calendar as CalendarIcon, Filter, CheckSquare, Square, Pencil, X, RefreshCw } from 'lucide-react';
 import { CATEGORIES, PRIORITY_COLORS } from '../constants';
 import { format, getDay, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -30,6 +30,8 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<Priority>('medium');
   const [newTaskCategory, setNewTaskCategory] = useState<Category>('Pessoal');
+  const [newTaskRecurrence, setNewTaskRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
+  const [newTaskWeekdays, setNewTaskWeekdays] = useState<number[]>([getDay(new Date())]);
 
   // Edit modal state
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -48,18 +50,40 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+  const toggleNewTaskWeekday = (day: number) => {
+    setNewTaskWeekdays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
-    addTask({
-      title: newTaskTitle,
-      priority: newTaskPriority,
-      category: newTaskCategory,
-      completed: false,
-      date: new Date()
-    });
+    if (newTaskRecurrence === 'weekly' && newTaskWeekdays.length > 0) {
+      newTaskWeekdays.forEach(weekday => {
+        addTask({
+          title: newTaskTitle,
+          priority: newTaskPriority,
+          category: newTaskCategory,
+          completed: false,
+          date: getDateForWeekday(weekday, new Date()),
+          recurrence: 'weekly',
+        });
+      });
+    } else {
+      addTask({
+        title: newTaskTitle,
+        priority: newTaskPriority,
+        category: newTaskCategory,
+        completed: false,
+        date: new Date(),
+        recurrence: newTaskRecurrence === 'none' ? undefined : newTaskRecurrence,
+      });
+    }
     setNewTaskTitle('');
+    setNewTaskRecurrence('none');
+    setNewTaskWeekdays([getDay(new Date())]);
   };
 
   const openEditModal = (task: Task) => {
@@ -126,40 +150,95 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleAddTask} className="bg-sys-card dark:bg-dark-card p-4 rounded-2xl shadow-soft border border-sys-border dark:border-dark-border mb-8 flex flex-col md:flex-row gap-4 transition-all focus-within:ring-1 ring-action-blue/50">
-        <div className="flex-1">
-          <input
-            type="text"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            placeholder="Adicionar nova tarefa..."
-            className="w-full h-full bg-transparent outline-none text-sys-text-main dark:text-dark-text placeholder-sys-text-sub"
-          />
+      <form onSubmit={handleAddTask} className="bg-sys-card dark:bg-dark-card p-4 rounded-2xl shadow-soft border border-sys-border dark:border-dark-border mb-8 flex flex-col gap-4 transition-all focus-within:ring-1 ring-action-blue/50">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <input
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              placeholder="Adicionar nova tarefa..."
+              className="w-full h-full bg-transparent outline-none text-sys-text-main dark:text-dark-text placeholder-sys-text-sub"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={newTaskPriority}
+              onChange={(e) => setNewTaskPriority(e.target.value as Priority)}
+              className="bg-sys-bg dark:bg-dark-bg border-none rounded-lg text-sm p-2 text-sys-text-sec dark:text-sys-text-sub outline-none focus:ring-1 ring-action-blue"
+            >
+              <option value="low">Baixa</option>
+              <option value="medium">Média</option>
+              <option value="high">Alta</option>
+            </select>
+            <select
+              value={newTaskCategory}
+              onChange={(e) => setNewTaskCategory(e.target.value as Category)}
+              className="bg-sys-bg dark:bg-dark-bg border-none rounded-lg text-sm p-2 text-sys-text-sec dark:text-sys-text-sub outline-none focus:ring-1 ring-action-blue"
+            >
+              {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+            <button
+              type="submit"
+              className="bg-action-blue hover:bg-action-blue/90 text-white p-2.5 rounded-xl transition-colors shadow-sm"
+            >
+              <Plus size={20} />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={newTaskPriority}
-            onChange={(e) => setNewTaskPriority(e.target.value as Priority)}
-            className="bg-sys-bg dark:bg-dark-bg border-none rounded-lg text-sm p-2 text-sys-text-sec dark:text-sys-text-sub outline-none focus:ring-1 ring-action-blue"
-          >
-            <option value="low">Baixa</option>
-            <option value="medium">Média</option>
-            <option value="high">Alta</option>
-          </select>
-          <select
-            value={newTaskCategory}
-            onChange={(e) => setNewTaskCategory(e.target.value as Category)}
-            className="bg-sys-bg dark:bg-dark-bg border-none rounded-lg text-sm p-2 text-sys-text-sec dark:text-sys-text-sub outline-none focus:ring-1 ring-action-blue"
-          >
-            {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
-          <button
-            type="submit"
-            className="bg-action-blue hover:bg-action-blue/90 text-white p-2.5 rounded-xl transition-colors shadow-sm"
-          >
-            <Plus size={20} />
-          </button>
+
+        {/* Recurrence selector */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-sys-text-sec dark:text-sys-text-sub uppercase tracking-wide">
+            <RefreshCw size={12} />
+            Repetição
+          </div>
+          <div className="flex bg-sys-bg dark:bg-dark-bg rounded-xl p-1 border border-sys-border dark:border-dark-border">
+            <button
+              type="button"
+              onClick={() => setNewTaskRecurrence('none')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${newTaskRecurrence === 'none' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-sys-text-main dark:text-dark-text' : 'text-sys-text-sub'}`}
+            >
+              Não
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewTaskRecurrence('daily')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${newTaskRecurrence === 'daily' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-action-blue' : 'text-sys-text-sub'}`}
+            >
+              Diária
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewTaskRecurrence('weekly')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${newTaskRecurrence === 'weekly' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-action-blue' : 'text-sys-text-sub'}`}
+            >
+              Semanal
+            </button>
+          </div>
         </div>
+
+        {/* Weekday picker */}
+        {newTaskRecurrence === 'weekly' && (
+          <div>
+            <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-2 uppercase tracking-wide">Repetir toda</label>
+            <div className="flex gap-1.5">
+              {WEEKDAYS.map(wd => (
+                <button
+                  key={wd.value}
+                  type="button"
+                  onClick={() => toggleNewTaskWeekday(wd.value)}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${newTaskWeekdays.includes(wd.value)
+                      ? 'bg-action-blue text-white shadow-sm'
+                      : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-action-blue'
+                    }`}
+                >
+                  {wd.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </form>
 
       {/* Filters */}
