@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff } from 'lucide-react';
 
 const Login: React.FC = () => {
     const { login, register } = useAuth();
@@ -10,6 +10,7 @@ const Login: React.FC = () => {
     const [name, setName] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -94,14 +95,21 @@ const Login: React.FC = () => {
                             <div className="relative">
                                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-sys-text-sub" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 pl-10 text-sm outline-none focus:ring-2 ring-action-blue dark:text-dark-text"
+                                    className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 pl-10 pr-10 text-sm outline-none focus:ring-2 ring-action-blue dark:text-dark-text"
                                     required
                                     minLength={6}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sys-text-sub hover:text-sys-text-main dark:hover:text-dark-text transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
 

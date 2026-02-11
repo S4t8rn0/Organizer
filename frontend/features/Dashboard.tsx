@@ -167,7 +167,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
                     <div className="bg-sys-bg/50 dark:bg-dark-bg/50 p-4 rounded-2xl border border-transparent hover:border-sys-border dark:hover:border-dark-border transition-all">
                       <p className="text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 flex items-center gap-1.5 uppercase tracking-wide">
                         <Clock size={12} />
-                        {format(evt.start, 'HH:mm')} - {format(evt.end, 'HH:mm')}
+                        {format(evt.start, "dd/MM")} • {format(evt.start, 'HH:mm')} - {format(evt.end, 'HH:mm')}
                       </p>
                       <p className="font-semibold text-sys-text-main dark:text-dark-text text-sm">{evt.title}</p>
                     </div>
@@ -227,7 +227,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
         </div>
 
       </div>
-    </div>
+    </div >
   );
 };
 
