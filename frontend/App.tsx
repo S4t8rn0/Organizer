@@ -108,7 +108,7 @@ const App: React.FC = () => {
         folder_id: newTask.folderId,
         recurrence: newTask.recurrence,
       });
-      setTasks([...tasks, { ...created, date: parseLocalDate(created.date) }]);
+      setTasks(prev => [...prev, { ...created, date: parseLocalDate(created.date) }]);
     } catch (error) {
       console.error('Error adding task:', error);
     }
@@ -116,7 +116,7 @@ const App: React.FC = () => {
   const toggleTask = async (id: string) => {
     try {
       const updated = await tasksApi.toggle(id);
-      setTasks(tasks.map(t => t.id === id ? { ...t, completed: updated.completed } : t));
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: updated.completed } : t));
     } catch (error) {
       console.error('Error toggling task:', error);
     }
@@ -130,7 +130,7 @@ const App: React.FC = () => {
         date: data.date ? formatLocalDate(data.date) : undefined,
         recurrence: data.recurrence,
       });
-      setTasks(tasks.map(t => t.id === id ? { ...t, ...data, date: data.date || t.date } : t));
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, ...data, date: data.date || t.date } : t));
     } catch (error) {
       console.error('Error updating task:', error);
     }
@@ -138,7 +138,7 @@ const App: React.FC = () => {
   const deleteTask = async (id: string) => {
     try {
       await tasksApi.delete(id);
-      setTasks(tasks.filter(t => t.id !== id));
+      setTasks(prev => prev.filter(t => t.id !== id));
     } catch (error) {
       console.error('Error deleting task:', error);
     }
@@ -156,7 +156,7 @@ const App: React.FC = () => {
         recurring: newEvent.recurring || false,
         recurrence: newEvent.recurrence,
       });
-      setEvents([...events, { ...created, start: new Date(created.start_time), end: new Date(created.end_time) }]);
+      setEvents(prev => [...prev, { ...created, start: new Date(created.start_time), end: new Date(created.end_time) }]);
     } catch (error) {
       console.error('Error adding event:', error);
     }
@@ -172,7 +172,7 @@ const App: React.FC = () => {
         recurring: data.recurring,
         recurrence: data.recurrence,
       });
-      setEvents(events.map(e => e.id === id ? { ...e, ...data } : e));
+      setEvents(prev => prev.map(e => e.id === id ? { ...e, ...data } : e));
     } catch (error) {
       console.error('Error updating event:', error);
     }
@@ -180,7 +180,7 @@ const App: React.FC = () => {
   const deleteEvent = async (id: string) => {
     try {
       await eventsApi.delete(id);
-      setEvents(events.filter(e => e.id !== id));
+      setEvents(prev => prev.filter(e => e.id !== id));
     } catch (error) {
       console.error('Error deleting event:', error);
     }
