@@ -1,24 +1,43 @@
 import React, { useState } from 'react';
 import { Task, Priority, Category } from '../types';
-import { Plus, Trash2, Tag, Calendar as CalendarIcon, Filter, CheckSquare, Square } from 'lucide-react';
+import { Plus, Trash2, Tag, Calendar as CalendarIcon, Filter, CheckSquare, Square, Pencil, X } from 'lucide-react';
 import { CATEGORIES, PRIORITY_COLORS } from '../constants';
-import { format } from 'date-fns';
+import { format, getDay, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const WEEKDAYS = [
+  { value: 1, label: 'Seg' },
+  { value: 2, label: 'Ter' },
+  { value: 3, label: 'Qua' },
+  { value: 4, label: 'Qui' },
+  { value: 5, label: 'Sex' },
+  { value: 6, label: 'Sáb' },
+  { value: 0, label: 'Dom' },
+];
 
 interface TasksProps {
   tasks: Task[];
   addTask: (task: Omit<Task, 'id'>) => void;
+  updateTask: (id: string, data: Partial<Task>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
 }
 
-const Tasks: React.FC<TasksProps> = ({ tasks, addTask, toggleTask, deleteTask }) => {
+const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, deleteTask }) => {
   const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
   const [categoryFilter, setCategoryFilter] = useState<Category | 'All'>('All');
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<Priority>('medium');
   const [newTaskCategory, setNewTaskCategory] = useState<Category>('Pessoal');
+
+  // Edit modal state
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editPriority, setEditPriority] = useState<Priority>('medium');
+  const [editCategory, setEditCategory] = useState<Category>('Pessoal');
+  const [editRecurrence, setEditRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
+  const [editWeekday, setEditWeekday] = useState<number>(1);
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'completed' && !task.completed) return false;
@@ -39,6 +58,42 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, toggleTask, deleteTask })
       date: new Date()
     });
     setNewTaskTitle('');
+  };
+
+  const openEditModal = (task: Task) => {
+    setEditingTask(task);
+    setEditTitle(task.title);
+    setEditPriority(task.priority);
+    setEditCategory(task.category);
+    setEditRecurrence(task.recurrence || 'none');
+    setEditWeekday(getDay(task.date));
+  };
+
+  const getDateForWeekday = (weekday: number, refDate: Date): Date => {
+    const weekStart = startOfWeek(refDate, { weekStartsOn: 1 });
+    // Map weekday (0=Sun) to offset from Monday start
+    const offset = weekday === 0 ? 6 : weekday - 1;
+    return addDays(weekStart, offset);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask || !editTitle.trim()) return;
+
+    const updates: Partial<Task> = {
+      title: editTitle,
+      priority: editPriority,
+      category: editCategory,
+      recurrence: editRecurrence === 'none' ? undefined : editRecurrence,
+    };
+
+    // If weekly recurrence, adjust date to match the selected weekday
+    if (editRecurrence === 'weekly') {
+      updates.date = getDateForWeekday(editWeekday, editingTask.date);
+    }
+
+    updateTask(editingTask.id, updates);
+    setEditingTask(null);
   };
 
   return (
@@ -164,6 +219,12 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, toggleTask, deleteTask })
                   {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
                 </span>
                 <button
+                  onClick={() => openEditModal(task)}
+                  className="p-2 text-sys-text-sub hover:text-action-blue hover:bg-action-blue/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Pencil size={18} />
+                </button>
+                <button
                   onClick={() => deleteTask(task.id)}
                   className="p-2 text-sys-text-sub hover:text-calm-coral hover:bg-calm-coral/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                 >
@@ -174,6 +235,106 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, toggleTask, deleteTask })
           ))
         )}
       </div>
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <div className="fixed inset-0 bg-sys-text-main/10 dark:bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-sys-card dark:bg-dark-card rounded-2xl w-full max-w-sm p-6 shadow-xl animate-fade-in border border-sys-border dark:border-dark-border">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-sys-text-main dark:text-dark-text">Editar Tarefa</h3>
+              <button onClick={() => setEditingTask(null)} className="text-sys-text-sub hover:text-sys-text-main dark:hover:text-dark-text">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Título</label>
+                <input
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none focus:ring-1 ring-action-blue dark:text-dark-text border border-transparent transition-all"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Prioridade</label>
+                <select
+                  value={editPriority}
+                  onChange={e => setEditPriority(e.target.value as Priority)}
+                  className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none dark:text-dark-text border-r-[12px] border-r-transparent"
+                >
+                  <option value="low">Baixa</option>
+                  <option value="medium">Média</option>
+                  <option value="high">Alta</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Categoria</label>
+                <select
+                  value={editCategory}
+                  onChange={e => setEditCategory(e.target.value as Category)}
+                  className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none dark:text-dark-text border-r-[12px] border-r-transparent"
+                >
+                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Repetição</label>
+                <div className="flex bg-sys-bg dark:bg-dark-bg rounded-xl p-1 border border-sys-border dark:border-dark-border">
+                  <button
+                    type="button"
+                    onClick={() => setEditRecurrence('none')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editRecurrence === 'none' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-sys-text-main dark:text-dark-text' : 'text-sys-text-sub'}`}
+                  >
+                    Não
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditRecurrence('daily')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editRecurrence === 'daily' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-action-blue' : 'text-sys-text-sub'}`}
+                  >
+                    Diária
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditRecurrence('weekly')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editRecurrence === 'weekly' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-action-blue' : 'text-sys-text-sub'}`}
+                  >
+                    Semanal
+                  </button>
+                </div>
+              </div>
+              {editRecurrence === 'weekly' && (
+                <div>
+                  <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-2 uppercase tracking-wide">Repetir toda</label>
+                  <div className="flex gap-1.5">
+                    {WEEKDAYS.map(wd => (
+                      <button
+                        key={wd.value}
+                        type="button"
+                        onClick={() => setEditWeekday(wd.value)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editWeekday === wd.value
+                            ? 'bg-action-blue text-white shadow-sm'
+                            : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-action-blue'
+                          }`}
+                      >
+                        {wd.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="pt-2">
+                <button type="submit" className="w-full bg-action-blue hover:bg-action-blue/90 text-white font-semibold py-3 rounded-xl transition-colors">
+                  Salvar Alterações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

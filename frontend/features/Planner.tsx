@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
 import { format, startOfWeek, addDays, isSameDay, getDay, addWeeks, subWeeks, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, X, Clock, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Clock, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle, RefreshCw, Pencil } from 'lucide-react';
 import { CalendarEvent, Task, Priority } from '../types';
 import { PRIORITY_COLORS } from '../constants';
+
+const WEEKDAYS = [
+  { value: 1, label: 'Seg' },
+  { value: 2, label: 'Ter' },
+  { value: 3, label: 'Qua' },
+  { value: 4, label: 'Qui' },
+  { value: 5, label: 'Sex' },
+  { value: 6, label: 'Sáb' },
+  { value: 0, label: 'Dom' },
+];
 
 interface PlannerProps {
   events: CalendarEvent[];
   tasks: Task[];
   onAddEvent: (event: Omit<CalendarEvent, 'id'>) => void;
+  onUpdateEvent: (id: string, data: Partial<CalendarEvent>) => void;
   onDeleteEvent: (id: string) => void;
   onAddTask: (task: Omit<Task, 'id'>) => void;
+  onUpdateTask: (id: string, data: Partial<Task>) => void;
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
 }
@@ -19,8 +31,10 @@ const Planner: React.FC<PlannerProps> = ({
   events,
   tasks,
   onAddEvent,
+  onUpdateEvent,
   onDeleteEvent,
   onAddTask,
+  onUpdateTask,
   onToggleTask,
   onDeleteTask
 }) => {
@@ -40,6 +54,22 @@ const Planner: React.FC<PlannerProps> = ({
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<Priority>('medium');
   const [newTaskRecurrence, setNewTaskRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
+  const [newTaskWeekday, setNewTaskWeekday] = useState<number>(1);
+
+  // Edit Event State
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editEventTitle, setEditEventTitle] = useState('');
+  const [editEventTimeStart, setEditEventTimeStart] = useState('09:00');
+  const [editEventTimeEnd, setEditEventTimeEnd] = useState('10:00');
+  const [editEventColor, setEditEventColor] = useState('bg-action-blue');
+  const [editEventRecurrence, setEditEventRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
+
+  // Edit Task State
+  const [editingPlannerTask, setEditingPlannerTask] = useState<Task | null>(null);
+  const [editPlannerTaskTitle, setEditPlannerTaskTitle] = useState('');
+  const [editPlannerTaskPriority, setEditPlannerTaskPriority] = useState<Priority>('medium');
+  const [editPlannerTaskRecurrence, setEditPlannerTaskRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
+  const [editPlannerTaskWeekday, setEditPlannerTaskWeekday] = useState<number>(1);
 
   // Hover state for zoom/blur effect
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
@@ -57,7 +87,31 @@ const Planner: React.FC<PlannerProps> = ({
     setSelectedDate(date);
     setNewTaskTitle('');
     setNewTaskRecurrence('none');
+    setNewTaskWeekday(getDay(date));
     setIsTaskModalOpen(true);
+  };
+
+  const openEditEventModal = (evt: CalendarEvent) => {
+    setEditingEvent(evt);
+    setEditEventTitle(evt.title);
+    setEditEventTimeStart(format(evt.start, 'HH:mm'));
+    setEditEventTimeEnd(format(evt.end, 'HH:mm'));
+    setEditEventColor(evt.color);
+    setEditEventRecurrence(evt.recurrence || 'none');
+  };
+
+  const openEditTaskModal = (task: Task) => {
+    setEditingPlannerTask(task);
+    setEditPlannerTaskTitle(task.title);
+    setEditPlannerTaskPriority(task.priority);
+    setEditPlannerTaskRecurrence(task.recurrence || 'none');
+    setEditPlannerTaskWeekday(getDay(task.date));
+  };
+
+  const getDateForWeekday = (weekday: number, refDate: Date): Date => {
+    const weekStart = startOfWeek(refDate, { weekStartsOn: 1 });
+    const offset = weekday === 0 ? 6 : weekday - 1;
+    return addDays(weekStart, offset);
   };
 
   const submitEvent = (e: React.FormEvent) => {
@@ -84,19 +138,66 @@ const Planner: React.FC<PlannerProps> = ({
     setIsEventModalOpen(false);
   };
 
+  const submitEditEvent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent || !editEventTitle) return;
+
+    const [startHours, startMinutes] = editEventTimeStart.split(':').map(Number);
+    const [endHours, endMinutes] = editEventTimeEnd.split(':').map(Number);
+
+    const start = new Date(editingEvent.start);
+    start.setHours(startHours, startMinutes);
+
+    const end = new Date(editingEvent.start);
+    end.setHours(endHours, endMinutes);
+
+    onUpdateEvent(editingEvent.id, {
+      title: editEventTitle,
+      start,
+      end,
+      color: editEventColor,
+      recurrence: editEventRecurrence === 'none' ? undefined : editEventRecurrence,
+      recurring: editEventRecurrence !== 'none'
+    });
+    setEditingEvent(null);
+  };
+
   const submitTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle) return;
 
+    let taskDate = selectedDate;
+    if (newTaskRecurrence === 'weekly') {
+      taskDate = getDateForWeekday(newTaskWeekday, selectedDate);
+    }
+
     onAddTask({
       title: newTaskTitle,
       priority: newTaskPriority,
-      date: selectedDate,
-      category: 'Outro', // Default category for quick add
+      date: taskDate,
+      category: 'Outro',
       completed: false,
       recurrence: newTaskRecurrence === 'none' ? undefined : newTaskRecurrence,
     });
     setIsTaskModalOpen(false);
+  };
+
+  const submitEditTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlannerTask || !editPlannerTaskTitle) return;
+
+    const updates: Partial<Task> = {
+      title: editPlannerTaskTitle,
+      priority: editPlannerTaskPriority,
+      recurrence: editPlannerTaskRecurrence === 'none' ? undefined : editPlannerTaskRecurrence,
+    };
+
+    if (editPlannerTaskRecurrence === 'weekly') {
+      updates.date = getDateForWeekday(editPlannerTaskWeekday, editingPlannerTask.date);
+    }
+
+    onUpdateTask(editingPlannerTask.id, updates);
+    setEditingPlannerTask(null);
   };
 
   const COLORS = [
@@ -221,12 +322,20 @@ const Planner: React.FC<PlannerProps> = ({
                             {format(evt.start, 'HH:mm')} - {format(evt.end, 'HH:mm')}
                           </p>
                         </div>
-                        <button
-                          onClick={() => onDeleteEvent(evt.id)}
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 text-sys-text-sub hover:text-calm-coral transition-opacity"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                          <button
+                            onClick={() => openEditEventModal(evt)}
+                            className="p-1 text-sys-text-sub hover:text-action-blue transition-colors"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            onClick={() => onDeleteEvent(evt.id)}
+                            className="p-1 text-sys-text-sub hover:text-calm-coral transition-colors"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -259,12 +368,20 @@ const Planner: React.FC<PlannerProps> = ({
                             {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
                           </div>
                         </div>
-                        <button
-                          onClick={() => onDeleteTask(task.id)}
-                          className="opacity-0 group-hover:opacity-100 text-sys-text-sub hover:text-calm-coral transition-opacity"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditTaskModal(task)}
+                            className="text-sys-text-sub hover:text-action-blue transition-colors"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            onClick={() => onDeleteTask(task.id)}
+                            className="text-sys-text-sub hover:text-calm-coral transition-opacity"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
                     ))}
 
@@ -380,6 +497,99 @@ const Planner: React.FC<PlannerProps> = ({
         </div>
       )}
 
+      {/* Edit Event Modal */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-sys-text-main/10 dark:bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-sys-card dark:bg-dark-card rounded-2xl w-full max-w-sm p-6 shadow-xl animate-fade-in border border-sys-border dark:border-dark-border">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-sys-text-main dark:text-dark-text">Editar Evento</h3>
+              <button onClick={() => setEditingEvent(null)} className="text-sys-text-sub hover:text-sys-text-main dark:hover:text-dark-text">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={submitEditEvent} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Título</label>
+                <input
+                  type="text"
+                  required
+                  value={editEventTitle}
+                  onChange={e => setEditEventTitle(e.target.value)}
+                  className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none focus:ring-1 ring-action-blue dark:text-dark-text border border-transparent transition-all"
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Início</label>
+                  <input
+                    type="time"
+                    required
+                    value={editEventTimeStart}
+                    onChange={e => setEditEventTimeStart(e.target.value)}
+                    className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none dark:text-dark-text"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Fim</label>
+                  <input
+                    type="time"
+                    required
+                    value={editEventTimeEnd}
+                    onChange={e => setEditEventTimeEnd(e.target.value)}
+                    className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none dark:text-dark-text"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-2 uppercase tracking-wide">Cor</label>
+                <div className="flex gap-2">
+                  {COLORS.map(c => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setEditEventColor(c.value)}
+                      className={`w-8 h-8 rounded-full ${c.value} transition-transform ${editEventColor === c.value ? 'ring-2 ring-offset-2 ring-sys-border scale-110' : 'hover:scale-110'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="pt-2">
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Repetição</label>
+                <div className="flex bg-sys-bg dark:bg-dark-bg rounded-xl p-1 border border-sys-border dark:border-dark-border">
+                  <button
+                    type="button"
+                    onClick={() => setEditEventRecurrence('none')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editEventRecurrence === 'none' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-sys-text-main dark:text-dark-text' : 'text-sys-text-sub'}`}
+                  >
+                    Não
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditEventRecurrence('daily')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editEventRecurrence === 'daily' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-action-blue' : 'text-sys-text-sub'}`}
+                  >
+                    Diária
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditEventRecurrence('weekly')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editEventRecurrence === 'weekly' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-action-blue' : 'text-sys-text-sub'}`}
+                  >
+                    Semanal
+                  </button>
+                </div>
+              </div>
+              <div className="pt-2">
+                <button type="submit" className="w-full bg-action-blue hover:bg-action-blue/90 text-white font-semibold py-3 rounded-xl transition-colors">
+                  Salvar Alterações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Add Task Modal */}
       {isTaskModalOpen && (
         <div className="fixed inset-0 bg-sys-text-main/10 dark:bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -441,6 +651,26 @@ const Planner: React.FC<PlannerProps> = ({
                   </button>
                 </div>
               </div>
+              {newTaskRecurrence === 'weekly' && (
+                <div>
+                  <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-2 uppercase tracking-wide">Repetir toda</label>
+                  <div className="flex gap-1.5">
+                    {WEEKDAYS.map(wd => (
+                      <button
+                        key={wd.value}
+                        type="button"
+                        onClick={() => setNewTaskWeekday(wd.value)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${newTaskWeekday === wd.value
+                            ? 'bg-terracotta text-white shadow-sm'
+                            : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-terracotta'
+                          }`}
+                      >
+                        {wd.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="pt-2">
                 <p className="text-xs text-sys-text-sub mb-4 flex items-center gap-1">
                   <CalendarIcon size={12} />
@@ -448,6 +678,96 @@ const Planner: React.FC<PlannerProps> = ({
                 </p>
                 <button type="submit" className="w-full bg-terracotta hover:bg-terracotta/90 text-white font-semibold py-3 rounded-xl transition-colors">
                   Salvar Tarefa
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingPlannerTask && (
+        <div className="fixed inset-0 bg-sys-text-main/10 dark:bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-sys-card dark:bg-dark-card rounded-2xl w-full max-w-sm p-6 shadow-xl animate-fade-in border border-sys-border dark:border-dark-border">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-sys-text-main dark:text-dark-text">Editar Tarefa</h3>
+              <button onClick={() => setEditingPlannerTask(null)} className="text-sys-text-sub hover:text-sys-text-main dark:hover:text-dark-text">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={submitEditTask} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Descrição</label>
+                <input
+                  type="text"
+                  required
+                  value={editPlannerTaskTitle}
+                  onChange={e => setEditPlannerTaskTitle(e.target.value)}
+                  className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none focus:ring-1 ring-terracotta dark:text-dark-text border border-transparent transition-all"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Prioridade</label>
+                <select
+                  value={editPlannerTaskPriority}
+                  onChange={e => setEditPlannerTaskPriority(e.target.value as Priority)}
+                  className="w-full bg-sys-bg dark:bg-dark-bg rounded-xl p-3 text-sm outline-none dark:text-dark-text border-r-[12px] border-r-transparent"
+                >
+                  <option value="low">Baixa</option>
+                  <option value="medium">Média</option>
+                  <option value="high">Alta</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-1 uppercase tracking-wide">Repetição</label>
+                <div className="flex bg-sys-bg dark:bg-dark-bg rounded-xl p-1 border border-sys-border dark:border-dark-border">
+                  <button
+                    type="button"
+                    onClick={() => setEditPlannerTaskRecurrence('none')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editPlannerTaskRecurrence === 'none' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-sys-text-main dark:text-dark-text' : 'text-sys-text-sub'}`}
+                  >
+                    Não
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditPlannerTaskRecurrence('daily')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editPlannerTaskRecurrence === 'daily' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-terracotta' : 'text-sys-text-sub'}`}
+                  >
+                    Diária
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditPlannerTaskRecurrence('weekly')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${editPlannerTaskRecurrence === 'weekly' ? 'bg-sys-card dark:bg-dark-card shadow-sm text-terracotta' : 'text-sys-text-sub'}`}
+                  >
+                    Semanal
+                  </button>
+                </div>
+              </div>
+              {editPlannerTaskRecurrence === 'weekly' && (
+                <div>
+                  <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-2 uppercase tracking-wide">Repetir toda</label>
+                  <div className="flex gap-1.5">
+                    {WEEKDAYS.map(wd => (
+                      <button
+                        key={wd.value}
+                        type="button"
+                        onClick={() => setEditPlannerTaskWeekday(wd.value)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editPlannerTaskWeekday === wd.value
+                            ? 'bg-terracotta text-white shadow-sm'
+                            : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-terracotta'
+                          }`}
+                      >
+                        {wd.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="pt-2">
+                <button type="submit" className="w-full bg-terracotta hover:bg-terracotta/90 text-white font-semibold py-3 rounded-xl transition-colors">
+                  Salvar Alterações
                 </button>
               </div>
             </form>

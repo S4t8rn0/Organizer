@@ -121,6 +121,20 @@ const App: React.FC = () => {
       console.error('Error toggling task:', error);
     }
   };
+  const updateTask = async (id: string, data: Partial<Task>) => {
+    try {
+      const updated = await tasksApi.update(id, {
+        title: data.title,
+        priority: data.priority,
+        category: data.category,
+        date: data.date ? formatLocalDate(data.date) : undefined,
+        recurrence: data.recurrence,
+      });
+      setTasks(tasks.map(t => t.id === id ? { ...t, ...data, date: data.date || t.date } : t));
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
   const deleteTask = async (id: string) => {
     try {
       await tasksApi.delete(id);
@@ -145,6 +159,22 @@ const App: React.FC = () => {
       setEvents([...events, { ...created, start: new Date(created.start_time), end: new Date(created.end_time) }]);
     } catch (error) {
       console.error('Error adding event:', error);
+    }
+  };
+  const updateEvent = async (id: string, data: Partial<CalendarEvent>) => {
+    try {
+      await eventsApi.update(id, {
+        title: data.title,
+        start_time: data.start?.toISOString(),
+        end_time: data.end?.toISOString(),
+        description: data.description,
+        color: data.color,
+        recurring: data.recurring,
+        recurrence: data.recurrence,
+      });
+      setEvents(events.map(e => e.id === id ? { ...e, ...data } : e));
+    } catch (error) {
+      console.error('Error updating event:', error);
     }
   };
   const deleteEvent = async (id: string) => {
@@ -346,14 +376,16 @@ const App: React.FC = () => {
             events={events}
             tasks={tasks}
             onAddEvent={addEvent}
+            onUpdateEvent={updateEvent}
             onDeleteEvent={deleteEvent}
             onAddTask={addTask}
+            onUpdateTask={updateTask}
             onToggleTask={toggleTask}
             onDeleteTask={deleteTask}
           />
         );
       case 'tasks':
-        return <Tasks tasks={tasks} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} />;
+        return <Tasks tasks={tasks} addTask={addTask} updateTask={updateTask} toggleTask={toggleTask} deleteTask={deleteTask} />;
       case 'notes':
         return <Notes notes={notes} addNote={addNote} updateNote={updateNote} updateNoteTitle={updateNoteTitle} deleteNote={deleteNote} />;
       case 'kanban':
