@@ -62,7 +62,7 @@ const App: React.FC = () => {
       ]);
 
       // Convert date strings to Date objects
-      setTasks(tasksData.map((t: any) => ({ ...t, date: parseLocalDate(t.date) })));
+      setTasks(tasksData.map((t: any) => ({ ...t, date: parseLocalDate(t.date), completedDates: t.completed_dates || [] })));
       setNotes(notesData.map((n: any) => ({ ...n, updatedAt: new Date(n.updated_at) })));
       setEvents(eventsData.map((e: any) => ({
         ...e,
@@ -113,10 +113,23 @@ const App: React.FC = () => {
       console.error('Error adding task:', error);
     }
   };
-  const toggleTask = async (id: string) => {
+  const toggleTask = async (id: string, date?: string) => {
     try {
-      const updated = await tasksApi.toggle(id);
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: updated.completed } : t));
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      if (task.recurrence && date) {
+        // Recurring task: toggle specific date in completedDates
+        const updated = await tasksApi.toggle(id, date);
+        setTasks(prev => prev.map(t => t.id === id ? {
+          ...t,
+          completedDates: updated.completed_dates || []
+        } : t));
+      } else {
+        // Non-recurring: simple toggle
+        const updated = await tasksApi.toggle(id);
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: updated.completed } : t));
+      }
     } catch (error) {
       console.error('Error toggling task:', error);
     }

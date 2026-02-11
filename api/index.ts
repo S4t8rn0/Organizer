@@ -28,7 +28,7 @@ interface AuthenticatedRequest extends Request {
 
 // Allowed fields for each entity (whitelist approach)
 const ALLOWED_FIELDS = {
-    tasks: ['title', 'completed', 'date', 'priority', 'category', 'folder_id', 'recurrence'],
+    tasks: ['title', 'completed', 'date', 'priority', 'category', 'folder_id', 'recurrence', 'completed_dates'],
     notes: ['title', 'content', 'category', 'tags'],
     calendar_events: ['title', 'start_time', 'end_time', 'description', 'color', 'recurring', 'recurrence'],
     kanban_tasks: ['title', 'description', 'status', 'priority'],
@@ -462,10 +462,11 @@ app.patch('/api/tasks/:id/toggle', uuidParamValidation('id'), handleValidation, 
     try {
         const supabaseClient = getSupabaseClient(req.userToken);
         const { id } = req.params;
+        const { date } = req.body; // Optional: specific date for recurring tasks
 
         const { data: task, error: fetchError } = await supabaseClient
             .from('tasks')
-            .select('completed')
+            .select('completed, recurrence, completed_dates')
             .eq('id', id)
             .eq('user_id', req.userId)
             .single();
@@ -475,16 +476,41 @@ app.patch('/api/tasks/:id/toggle', uuidParamValidation('id'), handleValidation, 
             return;
         }
 
-        const { data, error } = await supabaseClient
-            .from('tasks')
-            .update({ completed: !task.completed })
-            .eq('id', id)
-            .eq('user_id', req.userId)
-            .select()
-            .single();
+        // For recurring tasks with a specific date, use completed_dates array
+        if (task.recurrence && date) {
+            const completedDates: string[] = task.completed_dates || [];
+            const dateStr = date; // Expected format: YYYY-MM-DD
 
-        if (error) throw error;
-        res.json(data);
+            let updatedDates: string[];
+            if (completedDates.includes(dateStr)) {
+                updatedDates = completedDates.filter((d: string) => d !== dateStr);
+            } else {
+                updatedDates = [...completedDates, dateStr];
+            }
+
+            const { data, error } = await supabaseClient
+                .from('tasks')
+                .update({ completed_dates: updatedDates })
+                .eq('id', id)
+                .eq('user_id', req.userId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            res.json(data);
+        } else {
+            // Non-recurring: simple toggle
+            const { data, error } = await supabaseClient
+                .from('tasks')
+                .update({ completed: !task.completed })
+                .eq('id', id)
+                .eq('user_id', req.userId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            res.json(data);
+        }
     } catch (error) {
         res.status(500).json({ error: 'Erro ao alternar tarefa' });
     }

@@ -61,7 +61,10 @@ export const tasksApi = {
     getAll: () => fetchApi<any[]>('/tasks'),
     create: (data: any) => fetchApi<any>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => fetchApi<any>(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    toggle: (id: string) => fetchApi<any>(`/tasks/${id}/toggle`, { method: 'PATCH' }),
+    toggle: (id: string, date?: string) => fetchApi<any>(`/tasks/${id}/toggle`, {
+        method: 'PATCH',
+        ...(date ? { body: JSON.stringify({ date }) } : {}),
+    }),
     delete: (id: string) => fetchApi(`/tasks/${id}`, { method: 'DELETE' }),
 };
 

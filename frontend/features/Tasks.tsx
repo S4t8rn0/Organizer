@@ -19,7 +19,7 @@ interface TasksProps {
   tasks: Task[];
   addTask: (task: Omit<Task, 'id'>) => void;
   updateTask: (id: string, data: Partial<Task>) => void;
-  toggleTask: (id: string) => void;
+  toggleTask: (id: string, date?: string) => void;
   deleteTask: (id: string) => void;
 }
 
@@ -229,8 +229,8 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
                   type="button"
                   onClick={() => toggleNewTaskWeekday(wd.value)}
                   className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${newTaskWeekdays.includes(wd.value)
-                      ? 'bg-action-blue text-white shadow-sm'
-                      : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-action-blue'
+                    ? 'bg-action-blue text-white shadow-sm'
+                    : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-action-blue'
                     }`}
                 >
                   {wd.label}
@@ -284,56 +284,63 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
             Nenhuma tarefa encontrada.
           </div>
         ) : (
-          filteredTasks.map(task => (
-            <div
-              key={task.id}
-              className={`group flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300
-                ${task.completed
-                  ? 'bg-sys-bg/50 dark:bg-dark-bg/50 border-transparent opacity-60'
-                  : 'bg-sys-card dark:bg-dark-card border-sys-border dark:border-dark-border shadow-soft hover:border-action-blue/30'}`}
-            >
-              <button
-                onClick={() => toggleTask(task.id)}
-                className={`shrink-0 transition-colors ${task.completed ? 'text-action-blue' : 'text-sys-border dark:text-dark-border hover:text-action-blue'}`}
-              >
-                {task.completed ? <CheckSquare size={22} /> : <Square size={22} />}
-              </button>
+          filteredTasks.map(task => {
+            const dateStr = format(task.date, 'yyyy-MM-dd');
+            const isCompleted = task.recurrence
+              ? (task.completedDates || []).includes(dateStr)
+              : task.completed;
 
-              <div className="flex-1">
-                <h3 className={`font-semibold text-lg ${task.completed ? 'line-through text-sys-text-sub' : 'text-sys-text-main dark:text-dark-text'}`}>
-                  {task.title}
-                </h3>
-                <div className="flex items-center gap-3 mt-1.5 text-xs text-sys-text-sec dark:text-sys-text-sub font-medium">
-                  <span className="flex items-center gap-1">
-                    <CalendarIcon size={12} />
-                    {format(task.date, 'dd/MM/yyyy')}
+            return (
+              <div
+                key={task.id}
+                className={`group flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300
+                ${isCompleted
+                    ? 'bg-sys-bg/50 dark:bg-dark-bg/50 border-transparent opacity-60'
+                    : 'bg-sys-card dark:bg-dark-card border-sys-border dark:border-dark-border shadow-soft hover:border-action-blue/30'}`}
+              >
+                <button
+                  onClick={() => task.recurrence ? toggleTask(task.id, dateStr) : toggleTask(task.id)}
+                  className={`shrink-0 transition-colors ${isCompleted ? 'text-action-blue' : 'text-sys-border dark:text-dark-border hover:text-action-blue'}`}
+                >
+                  {isCompleted ? <CheckSquare size={22} /> : <Square size={22} />}
+                </button>
+
+                <div className="flex-1">
+                  <h3 className={`font-semibold text-lg ${isCompleted ? 'line-through text-sys-text-sub' : 'text-sys-text-main dark:text-dark-text'}`}>
+                    {task.title}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-1.5 text-xs text-sys-text-sec dark:text-sys-text-sub font-medium">
+                    <span className="flex items-center gap-1">
+                      <CalendarIcon size={12} />
+                      {format(task.date, 'dd/MM/yyyy')}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Tag size={12} />
+                      {task.category}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${PRIORITY_COLORS[task.priority]}`}>
+                    {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Tag size={12} />
-                    {task.category}
-                  </span>
+                  <button
+                    onClick={() => openEditModal(task)}
+                    className="p-2 text-sys-text-sub hover:text-action-blue hover:bg-action-blue/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    onClick={() => deleteTask(task.id)}
+                    className="p-2 text-sys-text-sub hover:text-calm-coral hover:bg-calm-coral/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-3">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${PRIORITY_COLORS[task.priority]}`}>
-                  {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
-                </span>
-                <button
-                  onClick={() => openEditModal(task)}
-                  className="p-2 text-sys-text-sub hover:text-action-blue hover:bg-action-blue/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                >
-                  <Pencil size={18} />
-                </button>
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  className="p-2 text-sys-text-sub hover:text-calm-coral hover:bg-calm-coral/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

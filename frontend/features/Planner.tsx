@@ -23,7 +23,7 @@ interface PlannerProps {
   onDeleteEvent: (id: string) => void;
   onAddTask: (task: Omit<Task, 'id'>) => void;
   onUpdateTask: (id: string, data: Partial<Task>) => void;
-  onToggleTask: (id: string) => void;
+  onToggleTask: (id: string, date?: string) => void;
   onDeleteTask: (id: string) => void;
 }
 
@@ -387,38 +387,45 @@ const Planner: React.FC<PlannerProps> = ({
                       </button>
                     </div>
 
-                    {dayTasks.map(task => (
-                      <div key={task.id} className="group flex items-start gap-1.5 p-1.5 bg-sys-bg/40 dark:bg-dark-bg/40 border border-transparent rounded-lg hover:bg-sys-bg hover:border-sys-border transition-colors">
-                        <button
-                          onClick={() => onToggleTask(task.id)}
-                          className={`mt-0.5 shrink-0 transition-colors ${task.completed ? 'text-action-blue' : 'text-sys-border dark:text-dark-border hover:text-action-blue'}`}
-                        >
-                          {task.completed ? <CheckCircle2 size={14} /> : <Circle size={14} />}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs break-words ${task.completed ? 'line-through text-sys-text-sub' : 'text-sys-text-main dark:text-dark-text font-medium'}`}>
-                            {task.title}
-                          </p>
-                          <div className={`inline-block mt-1 text-[8px] px-1.5 py-0.5 rounded-md uppercase font-bold tracking-wide ${PRIORITY_COLORS[task.priority]}`}>
-                            {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
+                    {dayTasks.map(task => {
+                      const dayStr = format(day, 'yyyy-MM-dd');
+                      const isCompletedOnDay = task.recurrence
+                        ? (task.completedDates || []).includes(dayStr)
+                        : task.completed;
+
+                      return (
+                        <div key={task.id} className="group flex items-start gap-1.5 p-1.5 bg-sys-bg/40 dark:bg-dark-bg/40 border border-transparent rounded-lg hover:bg-sys-bg hover:border-sys-border transition-colors">
+                          <button
+                            onClick={() => task.recurrence ? onToggleTask(task.id, dayStr) : onToggleTask(task.id)}
+                            className={`mt-0.5 shrink-0 transition-colors ${isCompletedOnDay ? 'text-action-blue' : 'text-sys-border dark:text-dark-border hover:text-action-blue'}`}
+                          >
+                            {isCompletedOnDay ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs break-words ${isCompletedOnDay ? 'line-through text-sys-text-sub' : 'text-sys-text-main dark:text-dark-text font-medium'}`}>
+                              {task.title}
+                            </p>
+                            <div className={`inline-block mt-1 text-[8px] px-1.5 py-0.5 rounded-md uppercase font-bold tracking-wide ${PRIORITY_COLORS[task.priority]}`}>
+                              {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => openEditTaskModal(task)}
+                              className="text-sys-text-sub hover:text-action-blue transition-colors"
+                            >
+                              <Pencil size={12} />
+                            </button>
+                            <button
+                              onClick={() => onDeleteTask(task.id)}
+                              className="text-sys-text-sub hover:text-calm-coral transition-opacity"
+                            >
+                              <Trash2 size={12} />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => openEditTaskModal(task)}
-                            className="text-sys-text-sub hover:text-action-blue transition-colors"
-                          >
-                            <Pencil size={12} />
-                          </button>
-                          <button
-                            onClick={() => onDeleteTask(task.id)}
-                            className="text-sys-text-sub hover:text-calm-coral transition-opacity"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     <button
                       onClick={() => handleOpenTaskModal(day)}

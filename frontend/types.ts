@@ -11,6 +11,7 @@ export interface Task {
   category: Category;
   folderId?: string;
   recurrence?: 'daily' | 'weekly';
+  completedDates?: string[];
 }
 
 export interface Note {

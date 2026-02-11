@@ -11,7 +11,7 @@ interface DashboardProps {
   events: CalendarEvent[];
   kanbanTasks: KanbanTask[];
   notes: Note[];
-  onToggleTask: (id: string) => void;
+  onToggleTask: (id: string, date?: string) => void;
   onNavigate: (view: any) => void;
 }
 
@@ -23,12 +23,20 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
 
   // Filter for today's tasks
   const today = new Date();
+  const todayStr = format(today, 'yyyy-MM-dd');
   const todaysTasks = tasks.filter(t =>
     new Date(t.date).toDateString() === today.toDateString()
   );
 
-  const pendingTasks = todaysTasks.filter(t => !t.completed);
-  const completedTasks = todaysTasks.filter(t => t.completed);
+  const isTaskCompletedToday = (task: Task) => {
+    if (task.recurrence) {
+      return (task.completedDates || []).includes(todayStr);
+    }
+    return task.completed;
+  };
+
+  const pendingTasks = todaysTasks.filter(t => !isTaskCompletedToday(t));
+  const completedTasks = todaysTasks.filter(t => isTaskCompletedToday(t));
   const progress = todaysTasks.length > 0 ? (completedTasks.length / todaysTasks.length) * 100 : 0;
 
   const quote = QUOTES[today.getDate() % QUOTES.length];
@@ -85,24 +93,27 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
                   Tudo tranquilo por aqui.
                 </div>
               ) : (
-                todaysTasks.slice(0, 4).map(task => (
-                  <div key={task.id} className="flex items-center gap-4 group p-2 hover:bg-sys-bg dark:hover:bg-dark-bg/50 rounded-xl transition-colors cursor-pointer" onClick={() => onToggleTask(task.id)}>
-                    <button
-                      className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors
-                        ${task.completed
-                          ? 'bg-action-blue border-action-blue text-white'
-                          : 'border-sys-border dark:border-dark-border bg-sys-card dark:bg-dark-card hover:border-action-blue'}`}
-                    >
-                      {task.completed && <CheckCircle2 size={12} strokeWidth={3} />}
-                    </button>
-                    <span className={`flex-1 text-sm font-medium ${task.completed ? 'line-through text-sys-text-sub' : 'text-sys-text-main dark:text-dark-text'}`}>
-                      {task.title}
-                    </span>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md ${PRIORITY_COLORS[task.priority]}`}>
-                      {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
-                    </span>
-                  </div>
-                ))
+                todaysTasks.slice(0, 4).map(task => {
+                  const completed = isTaskCompletedToday(task);
+                  return (
+                    <div key={task.id} className="flex items-center gap-4 group p-2 hover:bg-sys-bg dark:hover:bg-dark-bg/50 rounded-xl transition-colors cursor-pointer" onClick={() => task.recurrence ? onToggleTask(task.id, todayStr) : onToggleTask(task.id)}>
+                      <button
+                        className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors
+                        ${completed
+                            ? 'bg-action-blue border-action-blue text-white'
+                            : 'border-sys-border dark:border-dark-border bg-sys-card dark:bg-dark-card hover:border-action-blue'}`}
+                      >
+                        {completed && <CheckCircle2 size={12} strokeWidth={3} />}
+                      </button>
+                      <span className={`flex-1 text-sm font-medium ${completed ? 'line-through text-sys-text-sub' : 'text-sys-text-main dark:text-dark-text'}`}>
+                        {task.title}
+                      </span>
+                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md ${PRIORITY_COLORS[task.priority]}`}>
+                        {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
+                      </span>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

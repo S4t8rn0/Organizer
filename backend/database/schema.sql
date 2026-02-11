@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     category category_type DEFAULT 'Outro',
     folder_id TEXT,
     recurrence recurrence_type,
+    completed_dates TEXT[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
