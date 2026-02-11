@@ -39,12 +39,14 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
   const [editRecurrence, setEditRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
   const [editWeekdays, setEditWeekdays] = useState<number[]>([1]);
 
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'completed' && !task.completed) return false;
-    if (filter === 'pending' && task.completed) return false;
-    if (categoryFilter !== 'All' && task.category !== categoryFilter) return false;
-    return true;
-  });
+  const filteredTasks = tasks
+    .filter(task => {
+      if (filter === 'completed' && !task.completed) return false;
+      if (filter === 'pending' && task.completed) return false;
+      if (categoryFilter !== 'All' && task.category !== categoryFilter) return false;
+      return true;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
