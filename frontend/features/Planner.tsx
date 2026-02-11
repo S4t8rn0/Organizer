@@ -54,7 +54,7 @@ const Planner: React.FC<PlannerProps> = ({
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<Priority>('medium');
   const [newTaskRecurrence, setNewTaskRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
-  const [newTaskWeekday, setNewTaskWeekday] = useState<number>(1);
+  const [newTaskWeekdays, setNewTaskWeekdays] = useState<number[]>([1]);
 
   // Edit Event State
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
@@ -69,7 +69,7 @@ const Planner: React.FC<PlannerProps> = ({
   const [editPlannerTaskTitle, setEditPlannerTaskTitle] = useState('');
   const [editPlannerTaskPriority, setEditPlannerTaskPriority] = useState<Priority>('medium');
   const [editPlannerTaskRecurrence, setEditPlannerTaskRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
-  const [editPlannerTaskWeekday, setEditPlannerTaskWeekday] = useState<number>(1);
+  const [editPlannerTaskWeekdays, setEditPlannerTaskWeekdays] = useState<number[]>([1]);
 
   // Hover state for zoom/blur effect
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
@@ -87,7 +87,7 @@ const Planner: React.FC<PlannerProps> = ({
     setSelectedDate(date);
     setNewTaskTitle('');
     setNewTaskRecurrence('none');
-    setNewTaskWeekday(getDay(date));
+    setNewTaskWeekdays([getDay(date)]);
     setIsTaskModalOpen(true);
   };
 
@@ -105,13 +105,25 @@ const Planner: React.FC<PlannerProps> = ({
     setEditPlannerTaskTitle(task.title);
     setEditPlannerTaskPriority(task.priority);
     setEditPlannerTaskRecurrence(task.recurrence || 'none');
-    setEditPlannerTaskWeekday(getDay(task.date));
+    setEditPlannerTaskWeekdays([getDay(task.date)]);
   };
 
   const getDateForWeekday = (weekday: number, refDate: Date): Date => {
     const weekStart = startOfWeek(refDate, { weekStartsOn: 1 });
     const offset = weekday === 0 ? 6 : weekday - 1;
     return addDays(weekStart, offset);
+  };
+
+  const toggleNewTaskWeekday = (day: number) => {
+    setNewTaskWeekdays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+
+  const toggleEditPlannerTaskWeekday = (day: number) => {
+    setEditPlannerTaskWeekdays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
   };
 
   const submitEvent = (e: React.FormEvent) => {
@@ -166,19 +178,28 @@ const Planner: React.FC<PlannerProps> = ({
     e.preventDefault();
     if (!newTaskTitle) return;
 
-    let taskDate = selectedDate;
-    if (newTaskRecurrence === 'weekly') {
-      taskDate = getDateForWeekday(newTaskWeekday, selectedDate);
+    if (newTaskRecurrence === 'weekly' && newTaskWeekdays.length > 0) {
+      // Create one task per selected day
+      newTaskWeekdays.forEach(weekday => {
+        onAddTask({
+          title: newTaskTitle,
+          priority: newTaskPriority,
+          date: getDateForWeekday(weekday, selectedDate),
+          category: 'Outro',
+          completed: false,
+          recurrence: 'weekly',
+        });
+      });
+    } else {
+      onAddTask({
+        title: newTaskTitle,
+        priority: newTaskPriority,
+        date: selectedDate,
+        category: 'Outro',
+        completed: false,
+        recurrence: newTaskRecurrence === 'none' ? undefined : newTaskRecurrence,
+      });
     }
-
-    onAddTask({
-      title: newTaskTitle,
-      priority: newTaskPriority,
-      date: taskDate,
-      category: 'Outro',
-      completed: false,
-      recurrence: newTaskRecurrence === 'none' ? undefined : newTaskRecurrence,
-    });
     setIsTaskModalOpen(false);
   };
 
@@ -192,11 +213,25 @@ const Planner: React.FC<PlannerProps> = ({
       recurrence: editPlannerTaskRecurrence === 'none' ? undefined : editPlannerTaskRecurrence,
     };
 
-    if (editPlannerTaskRecurrence === 'weekly') {
-      updates.date = getDateForWeekday(editPlannerTaskWeekday, editingPlannerTask.date);
+    if (editPlannerTaskRecurrence === 'weekly' && editPlannerTaskWeekdays.length > 0) {
+      updates.date = getDateForWeekday(editPlannerTaskWeekdays[0], editingPlannerTask.date);
+      onUpdateTask(editingPlannerTask.id, updates);
+
+      // Create new tasks for additional selected days
+      editPlannerTaskWeekdays.slice(1).forEach(weekday => {
+        onAddTask({
+          title: editPlannerTaskTitle,
+          priority: editPlannerTaskPriority,
+          date: getDateForWeekday(weekday, editingPlannerTask.date),
+          category: 'Outro',
+          completed: false,
+          recurrence: 'weekly',
+        });
+      });
+    } else {
+      onUpdateTask(editingPlannerTask.id, updates);
     }
 
-    onUpdateTask(editingPlannerTask.id, updates);
     setEditingPlannerTask(null);
   };
 
@@ -659,10 +694,10 @@ const Planner: React.FC<PlannerProps> = ({
                       <button
                         key={wd.value}
                         type="button"
-                        onClick={() => setNewTaskWeekday(wd.value)}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${newTaskWeekday === wd.value
-                            ? 'bg-terracotta text-white shadow-sm'
-                            : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-terracotta'
+                        onClick={() => toggleNewTaskWeekday(wd.value)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${newTaskWeekdays.includes(wd.value)
+                          ? 'bg-terracotta text-white shadow-sm'
+                          : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-terracotta'
                           }`}
                       >
                         {wd.label}
@@ -753,10 +788,10 @@ const Planner: React.FC<PlannerProps> = ({
                       <button
                         key={wd.value}
                         type="button"
-                        onClick={() => setEditPlannerTaskWeekday(wd.value)}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editPlannerTaskWeekday === wd.value
-                            ? 'bg-terracotta text-white shadow-sm'
-                            : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-terracotta'
+                        onClick={() => toggleEditPlannerTaskWeekday(wd.value)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editPlannerTaskWeekdays.includes(wd.value)
+                          ? 'bg-terracotta text-white shadow-sm'
+                          : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-terracotta'
                           }`}
                       >
                         {wd.label}

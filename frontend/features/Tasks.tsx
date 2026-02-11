@@ -37,7 +37,7 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
   const [editPriority, setEditPriority] = useState<Priority>('medium');
   const [editCategory, setEditCategory] = useState<Category>('Pessoal');
   const [editRecurrence, setEditRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
-  const [editWeekday, setEditWeekday] = useState<number>(1);
+  const [editWeekdays, setEditWeekdays] = useState<number[]>([1]);
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'completed' && !task.completed) return false;
@@ -66,7 +66,7 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
     setEditPriority(task.priority);
     setEditCategory(task.category);
     setEditRecurrence(task.recurrence || 'none');
-    setEditWeekday(getDay(task.date));
+    setEditWeekdays([getDay(task.date)]);
   };
 
   const getDateForWeekday = (weekday: number, refDate: Date): Date => {
@@ -74,6 +74,12 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
     // Map weekday (0=Sun) to offset from Monday start
     const offset = weekday === 0 ? 6 : weekday - 1;
     return addDays(weekStart, offset);
+  };
+
+  const toggleEditWeekday = (day: number) => {
+    setEditWeekdays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -87,12 +93,26 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
       recurrence: editRecurrence === 'none' ? undefined : editRecurrence,
     };
 
-    // If weekly recurrence, adjust date to match the selected weekday
-    if (editRecurrence === 'weekly') {
-      updates.date = getDateForWeekday(editWeekday, editingTask.date);
+    if (editRecurrence === 'weekly' && editWeekdays.length > 0) {
+      // Update existing task with the first selected day
+      updates.date = getDateForWeekday(editWeekdays[0], editingTask.date);
+      updateTask(editingTask.id, updates);
+
+      // Create new tasks for each additional selected day
+      editWeekdays.slice(1).forEach(weekday => {
+        addTask({
+          title: editTitle,
+          priority: editPriority,
+          category: editCategory,
+          completed: false,
+          date: getDateForWeekday(weekday, editingTask.date),
+          recurrence: 'weekly',
+        });
+      });
+    } else {
+      updateTask(editingTask.id, updates);
     }
 
-    updateTask(editingTask.id, updates);
     setEditingTask(null);
   };
 
@@ -314,10 +334,10 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
                       <button
                         key={wd.value}
                         type="button"
-                        onClick={() => setEditWeekday(wd.value)}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editWeekday === wd.value
-                            ? 'bg-action-blue text-white shadow-sm'
-                            : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-action-blue'
+                        onClick={() => toggleEditWeekday(wd.value)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editWeekdays.includes(wd.value)
+                          ? 'bg-action-blue text-white shadow-sm'
+                          : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:text-action-blue'
                           }`}
                       >
                         {wd.label}
