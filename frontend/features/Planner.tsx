@@ -297,15 +297,16 @@ const Planner: React.FC<PlannerProps> = ({
 
       {/* Mobile Day Picker Strip */}
       {isMobile && (
-        <div className="flex items-center gap-1.5 px-4 mb-3 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1 px-3 mb-3">
           {weekDays.map((day, idx) => {
             const isToday = isSameDay(day, new Date());
             const isSelected = selectedDayIndex === idx;
+            const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
             return (
               <button
                 key={idx}
                 onClick={() => setSelectedDayIndex(idx)}
-                className={`flex flex-col items-center min-w-[44px] py-2 px-2.5 rounded-xl transition-all duration-200 shrink-0
+                className={`flex-1 flex flex-col items-center py-1.5 rounded-xl transition-all duration-200
                   ${isSelected
                     ? 'bg-action-blue text-white shadow-md'
                     : isToday
@@ -313,8 +314,8 @@ const Planner: React.FC<PlannerProps> = ({
                       : 'bg-sys-card dark:bg-dark-card text-sys-text-sub border border-sys-border dark:border-dark-border'
                   }`}
               >
-                <span className="text-[10px] font-bold uppercase">{format(day, 'EEE', { locale: ptBR })}</span>
-                <span className="text-base font-bold mt-0.5">{format(day, 'dd')}</span>
+                <span className="text-[9px] font-bold uppercase leading-tight">{dayLabels[idx]}</span>
+                <span className="text-sm font-bold mt-0.5">{format(day, 'dd')}</span>
               </button>
             );
           })}
