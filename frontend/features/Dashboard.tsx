@@ -42,11 +42,11 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
   const quote = QUOTES[today.getDate() % QUOTES.length];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+    <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-sys-text-main dark:text-dark-text tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold text-sys-text-main dark:text-dark-text tracking-tight">
             Olá, {userName}
           </h1>
           <p className="text-sys-text-sec dark:text-sys-text-sub mt-2 text-sm font-medium">
@@ -59,8 +59,8 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
 
         {/* Today's Focus */}
         <div className="col-span-1 md:col-span-2 space-y-8">
-          <div className="bg-sys-card dark:bg-dark-card rounded-3xl p-8 border border-sys-border dark:border-dark-border shadow-soft">
-            <div className="flex justify-between items-center mb-8">
+          <div className="bg-sys-card dark:bg-dark-card rounded-3xl p-4 md:p-8 border border-sys-border dark:border-dark-border shadow-soft">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
               <h2 className="text-xl font-bold dark:text-dark-text flex items-center gap-3">
                 <div className="w-1.5 h-6 bg-terracotta rounded-full" />
                 Foco de Hoje
@@ -74,7 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
             </div>
 
             {/* Progress Bar */}
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <div className="flex justify-between text-xs font-semibold uppercase tracking-wider mb-2 text-sys-text-sub">
                 <span>Progresso</span>
                 <span>{Math.round(progress)}%</span>
@@ -119,7 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
           </div>
 
           {/* Recent Notes */}
-          <div className="bg-sys-card dark:bg-dark-card p-8 rounded-3xl border border-sys-border dark:border-dark-border shadow-soft">
+          <div className="bg-sys-card dark:bg-dark-card p-4 md:p-8 rounded-3xl border border-sys-border dark:border-dark-border shadow-soft">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-sys-text-main dark:text-dark-text flex items-center gap-2 text-xl">
                 <FileText size={20} className="text-soft-lilac" />
@@ -158,7 +158,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
         {/* Schedule Sidebar */}
         {/* Schedule Sidebar */}
         <div className="col-span-1 space-y-8">
-          <div className="bg-sys-card dark:bg-dark-card rounded-3xl p-8 border border-sys-border dark:border-dark-border shadow-soft flex flex-col">
+          <div className="bg-sys-card dark:bg-dark-card rounded-3xl p-4 md:p-8 border border-sys-border dark:border-dark-border shadow-soft flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold dark:text-dark-text">Agenda</h2>
               <button
@@ -199,7 +199,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, events, kanbanTasks, notes
           </div>
 
           {/* Kanban Preview */}
-          <div className="bg-sys-card dark:bg-dark-card rounded-3xl p-8 border border-sys-border dark:border-dark-border shadow-soft">
+          <div className="bg-sys-card dark:bg-dark-card rounded-3xl p-4 md:p-8 border border-sys-border dark:border-dark-border shadow-soft">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold dark:text-dark-text flex items-center gap-3">
                 <Columns size={20} className="text-org-blue" />

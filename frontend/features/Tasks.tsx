@@ -293,7 +293,7 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
             return (
               <div
                 key={task.id}
-                className={`group flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300
+                className={`group flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-2xl border transition-all duration-300
                 ${isCompleted
                     ? 'bg-sys-bg/50 dark:bg-dark-bg/50 border-transparent opacity-60'
                     : 'bg-sys-card dark:bg-dark-card border-sys-border dark:border-dark-border shadow-soft hover:border-action-blue/30'}`}
@@ -327,13 +327,13 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
                   </span>
                   <button
                     onClick={() => openEditModal(task)}
-                    className="p-2 text-sys-text-sub hover:text-action-blue hover:bg-action-blue/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                    className="p-2 text-sys-text-sub hover:text-action-blue hover:bg-action-blue/10 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
                   >
                     <Pencil size={18} />
                   </button>
                   <button
                     onClick={() => deleteTask(task.id)}
-                    className="p-2 text-sys-text-sub hover:text-calm-coral hover:bg-calm-coral/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                    className="p-2 text-sys-text-sub hover:text-calm-coral hover:bg-calm-coral/10 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
                   >
                     <Trash2 size={18} />
                   </button>

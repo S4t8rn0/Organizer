@@ -160,17 +160,17 @@ const Finance: React.FC<FinanceProps> = ({
 
       {/* Header Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-terracotta to-[#E8B08B] text-white p-6 rounded-3xl shadow-soft relative overflow-hidden">
+        <div className="bg-gradient-to-br from-terracotta to-[#E8B08B] text-white p-4 md:p-6 rounded-3xl shadow-soft relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10"><DollarSign size={100} /></div>
           <p className="text-white/80 text-sm font-bold uppercase tracking-wider mb-1">Saldo</p>
-          <h2 className="text-3xl font-bold mb-4">{formatCurrency(totalBalance)}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">{formatCurrency(totalBalance)}</h2>
           <div className="flex items-center gap-2 text-xs bg-white/20 w-fit px-3 py-1.5 rounded-full backdrop-blur-sm">
             <Wallet size={12} />
             <span>Saldo Atual</span>
           </div>
         </div>
 
-        <div className="bg-sys-card dark:bg-dark-card p-6 rounded-3xl border border-sys-border dark:border-dark-border shadow-soft flex items-center justify-between">
+        <div className="bg-sys-card dark:bg-dark-card p-4 md:p-6 rounded-3xl border border-sys-border dark:border-dark-border shadow-soft flex items-center justify-between">
           <div>
             <p className="text-sys-text-sec dark:text-sys-text-sub text-sm font-bold uppercase tracking-wider">Entradas</p>
             <h2 className="text-2xl font-bold text-action-blue">{formatCurrency(income)}</h2>
@@ -180,7 +180,7 @@ const Finance: React.FC<FinanceProps> = ({
           </div>
         </div>
 
-        <div className="bg-sys-card dark:bg-dark-card p-6 rounded-3xl border border-sys-border dark:border-dark-border shadow-soft flex items-center justify-between">
+        <div className="bg-sys-card dark:bg-dark-card p-4 md:p-6 rounded-3xl border border-sys-border dark:border-dark-border shadow-soft flex items-center justify-between">
           <div>
             <p className="text-sys-text-sec dark:text-sys-text-sub text-sm font-bold uppercase tracking-wider">Saídas</p>
             <h2 className="text-2xl font-bold text-calm-coral">{formatCurrency(expenses)}</h2>
@@ -284,7 +284,7 @@ const Finance: React.FC<FinanceProps> = ({
                         <span className={`font-semibold text-sm ${t.type === 'income' ? 'text-action-blue' : 'text-calm-coral'}`}>
                           {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
                         </span>
-                        <button onClick={() => onDeleteTransaction(t.id)} className="text-sys-text-sub hover:text-calm-coral opacity-0 group-hover:opacity-100 transition-all">
+                        <button onClick={() => onDeleteTransaction(t.id)} className="text-sys-text-sub hover:text-calm-coral opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -364,7 +364,7 @@ const Finance: React.FC<FinanceProps> = ({
       ) : (
         /* Investments Tab */
         <div className="bg-sys-card dark:bg-dark-card rounded-3xl border border-sys-border dark:border-dark-border p-8 shadow-soft">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
               <h2 className="text-xl font-bold text-sys-text-main dark:text-dark-text flex items-center gap-2">
                 <TrendingUp className="text-action-blue" />
@@ -373,19 +373,19 @@ const Finance: React.FC<FinanceProps> = ({
               <p className="text-sm text-sys-text-sub font-medium mt-1">Total acumulado: <span className="font-bold text-sys-text-main dark:text-dark-text">{formatCurrency(investmentTotal)}</span></p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
               <input
                 placeholder="Ativo (Ex: PETR4)"
                 value={invName}
                 onChange={e => setInvName(e.target.value)}
-                className="bg-sys-bg dark:bg-dark-bg px-4 py-2.5 rounded-xl text-sm outline-none w-32 dark:text-dark-text border border-transparent focus:border-terracotta"
+                className="bg-sys-bg dark:bg-dark-bg px-4 py-2.5 rounded-xl text-sm outline-none w-full md:w-32 dark:text-dark-text border border-transparent focus:border-terracotta"
               />
               <input
                 placeholder="Valor"
                 type="number"
                 value={invValue}
                 onChange={e => setInvValue(e.target.value)}
-                className="bg-sys-bg dark:bg-dark-bg px-4 py-2.5 rounded-xl text-sm outline-none w-28 dark:text-dark-text border border-transparent focus:border-terracotta"
+                className="bg-sys-bg dark:bg-dark-bg px-4 py-2.5 rounded-xl text-sm outline-none w-full md:w-28 dark:text-dark-text border border-transparent focus:border-terracotta"
               />
               <button onClick={handleAddInvestment} className="bg-action-blue hover:bg-action-blue/90 text-white px-4 py-2.5 rounded-xl transition-colors">
                 <Plus size={20} />
@@ -400,7 +400,7 @@ const Finance: React.FC<FinanceProps> = ({
                   <span className="bg-terracotta/10 text-terracotta text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">{inv.type}</span>
                   <button
                     onClick={() => onDeleteInvestment(inv.id)}
-                    className="text-sys-text-sub hover:text-calm-coral transition-colors opacity-0 group-hover:opacity-100 p-1"
+                    className="text-sys-text-sub hover:text-calm-coral transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1"
                   >
                     <Trash2 size={16} />
                   </button>

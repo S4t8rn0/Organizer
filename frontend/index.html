@@ -61,6 +61,12 @@
       body {
         font-family: 'Inter', sans-serif;
       }
+
+      /* Evitar scroll bounce no iOS */
+      html, body {
+        overscroll-behavior: none;
+      }
+
       /* Custom scrollbar for cleaner look */
       ::-webkit-scrollbar {
         width: 6px;
@@ -75,6 +81,38 @@
       }
       .dark ::-webkit-scrollbar-thumb {
         background: #475569;
+      }
+
+      /* Safe area para dispositivos com notch (iPhone) */
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      /* Esconder scrollbar no mobile */
+      @media (max-width: 767px) {
+        .custom-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .custom-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      }
+
+      /* Evitar zoom automático no iOS ao focar inputs */
+      @media (max-width: 767px) {
+        input, select, textarea {
+          font-size: 16px !important;
+        }
+      }
+
+      /* Animação fade-in */
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
       }
     </style>
   <script type="importmap">

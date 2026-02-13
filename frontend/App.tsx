@@ -460,8 +460,8 @@ const App: React.FC = () => {
         onLogout={logout}
       />
 
-      {/* Adjusted margin left for smaller sidebar */}
-      <main className="flex-1 ml-16 md:ml-44 p-4 md:p-8 overflow-y-auto h-screen bg-sys-bg dark:bg-dark-bg">
+      {/* Mobile: no left margin, bottom padding for nav bar. Desktop: left margin for sidebar */}
+      <main className="flex-1 ml-0 md:ml-44 p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto h-screen bg-sys-bg dark:bg-dark-bg">
         {renderView()}
       </main>
     </div>

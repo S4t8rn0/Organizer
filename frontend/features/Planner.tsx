@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, startOfWeek, addDays, isSameDay, getDay, addWeeks, subWeeks, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, X, Clock, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle, RefreshCw, Pencil } from 'lucide-react';
@@ -74,7 +74,27 @@ const Planner: React.FC<PlannerProps> = ({
   // Hover state for zoom/blur effect
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Mobile: selected day index (0-6)
+  const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
+    // Default to today's index in the week, or 0
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const diff = Math.floor((today.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
+    return diff >= 0 && diff < 7 ? diff : 0;
+  });
+
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
+  const daysToRender = isMobile ? [weekDays[selectedDayIndex]] : weekDays;
 
   const handleOpenEventModal = (date: Date) => {
     setSelectedDate(date);
@@ -246,9 +266,9 @@ const Planner: React.FC<PlannerProps> = ({
   return (
     <div className="h-full flex flex-col animate-fade-in max-w-[3000px] mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4 px-7">
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-4 md:mb-6 gap-3 md:gap-4 px-4 md:px-7">
         <div>
-          <h2 className="text-2xl font-bold text-sys-text-main dark:text-dark-text capitalize tracking-tight">
+          <h2 className="text-xl md:text-2xl font-bold text-sys-text-main dark:text-dark-text capitalize tracking-tight">
             {format(currentWeekStart, "'Semana de' d 'de' MMMM", { locale: ptBR })}
           </h2>
           <div className="h-1 w-20 bg-org-blue mt-2 rounded-full opacity-50"></div>
@@ -275,10 +295,36 @@ const Planner: React.FC<PlannerProps> = ({
         </div>
       </div>
 
+      {/* Mobile Day Picker Strip */}
+      {isMobile && (
+        <div className="flex items-center gap-1.5 px-4 mb-3 overflow-x-auto pb-1">
+          {weekDays.map((day, idx) => {
+            const isToday = isSameDay(day, new Date());
+            const isSelected = selectedDayIndex === idx;
+            return (
+              <button
+                key={idx}
+                onClick={() => setSelectedDayIndex(idx)}
+                className={`flex flex-col items-center min-w-[44px] py-2 px-2.5 rounded-xl transition-all duration-200 shrink-0
+                  ${isSelected
+                    ? 'bg-action-blue text-white shadow-md'
+                    : isToday
+                      ? 'bg-org-blue/10 text-action-blue border border-org-blue/30'
+                      : 'bg-sys-card dark:bg-dark-card text-sys-text-sub border border-sys-border dark:border-dark-border'
+                  }`}
+              >
+                <span className="text-[10px] font-bold uppercase">{format(day, 'EEE', { locale: ptBR })}</span>
+                <span className="text-base font-bold mt-0.5">{format(day, 'dd')}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Week Grid */}
-      <div className="flex-1 overflow-x-auto overflow-y-visible pb-4 pt-4 px-7">
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-2 min-w-[2800px] md:min-w-0 h-full">
-          {weekDays.map((day) => {
+      <div className="flex-1 overflow-x-auto overflow-y-visible pb-4 pt-2 md:pt-4 px-4 md:px-7">
+        <div className={`grid gap-2 h-full ${isMobile ? 'grid-cols-1' : 'grid-cols-7'}`}>
+          {daysToRender.map((day) => {
             const isToday = isSameDay(day, new Date());
 
             // Filter Events for this day (handling recurring)
@@ -300,21 +346,21 @@ const Planner: React.FC<PlannerProps> = ({
             return (
               <div
                 key={day.toString()}
-                onMouseEnter={() => setHoveredDay(day.toString())}
-                onMouseLeave={() => setHoveredDay(null)}
+                onMouseEnter={() => !isMobile && setHoveredDay(day.toString())}
+                onMouseLeave={() => !isMobile && setHoveredDay(null)}
                 className={`flex flex-col bg-sys-card dark:bg-dark-card rounded-2xl border h-full max-h-full overflow-hidden
                   transition-all duration-300 ease-out origin-center
-                  ${hoveredDay === day.toString()
+                  ${!isMobile && hoveredDay === day.toString()
                     ? 'scale-[1.02] -mx-6 shadow-2xl z-20'
-                    : hoveredDay !== null
+                    : !isMobile && hoveredDay !== null
                       ? 'blur-[1px] opacity-60 scale-[0.98]'
                       : ''}
                   ${isToday
                     ? 'border-org-blue ring-1 ring-org-blue ring-opacity-30'
                     : 'border-sys-border dark:border-dark-border'}`}
               >
-                {/* Column Header */}
-                <div className={`p-2 text-center border-b ${isToday ? 'bg-org-blue/5 dark:bg-org-blue/10' : 'border-sys-border dark:border-dark-border'}`}>
+                {/* Column Header — hidden on mobile (day picker replaces it) */}
+                <div className={`hidden md:block p-2 text-center border-b ${isToday ? 'bg-org-blue/5 dark:bg-org-blue/10' : 'border-sys-border dark:border-dark-border'}`}>
                   <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isToday ? 'text-action-blue dark:text-action-blue' : 'text-sys-text-sub'}`}>
                     {format(day, 'EEE', { locale: ptBR })}
                   </p>
@@ -357,7 +403,7 @@ const Planner: React.FC<PlannerProps> = ({
                             {format(evt.start, 'HH:mm')} - {format(evt.end, 'HH:mm')}
                           </p>
                         </div>
-                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                        <div className="absolute top-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
                           <button
                             onClick={() => openEditEventModal(evt)}
                             className="p-1 text-sys-text-sub hover:text-action-blue transition-colors"
@@ -409,7 +455,7 @@ const Planner: React.FC<PlannerProps> = ({
                               {task.priority === 'low' ? 'Baixa' : task.priority === 'medium' ? 'Média' : 'Alta'}
                             </div>
                           </div>
-                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => openEditTaskModal(task)}
                               className="text-sys-text-sub hover:text-action-blue transition-colors"

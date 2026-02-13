@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KanbanTask, KanbanStatus, Priority } from '../types';
 import { Plus, ChevronLeft, ChevronRight, GripVertical, X } from 'lucide-react';
 import { PRIORITY_COLORS } from '../constants';
@@ -22,6 +22,19 @@ const Kanban: React.FC<KanbanProps> = ({ tasks, setTasks }) => {
     const [newTaskPriority, setNewTaskPriority] = useState<Priority>('medium');
     const [newTaskColumn, setNewTaskColumn] = useState<KanbanStatus>('todo');
     const [draggedTask, setDraggedTask] = useState<string | null>(null);
+
+    // Mobile detection
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 767px)');
+        setIsMobile(mq.matches);
+        const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+        mq.addEventListener('change', handler);
+        return () => mq.removeEventListener('change', handler);
+    }, []);
+
+    // Mobile tab state
+    const [activeColumn, setActiveColumn] = useState<KanbanStatus>('todo');
 
     const addTask = async () => {
         if (!newTaskTitle.trim()) return;
@@ -92,23 +105,48 @@ const Kanban: React.FC<KanbanProps> = ({ tasks, setTasks }) => {
         setDraggedTask(null);
     };
 
+    const columnsToRender = isMobile ? COLUMNS.filter(c => c.id === activeColumn) : COLUMNS;
+
     return (
-        <div className="h-full flex flex-col gap-6 animate-fade-in">
+        <div className="h-full flex flex-col gap-4 md:gap-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between shrink-0">
-                <h2 className="text-2xl font-bold text-sys-text-main dark:text-dark-text tracking-tight pl-2">Kanban</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-sys-text-main dark:text-dark-text tracking-tight pl-2">Kanban</h2>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-action-blue hover:bg-action-blue/90 text-white rounded-xl transition-colors text-sm font-semibold shadow-md"
+                    className="flex items-center gap-2 px-4 md:px-5 py-2.5 bg-action-blue hover:bg-action-blue/90 text-white rounded-xl transition-colors text-sm font-semibold shadow-md"
                 >
                     <Plus size={18} />
-                    Nova Tarefa
+                    <span className="hidden sm:inline">Nova Tarefa</span>
                 </button>
             </div>
 
+            {/* Mobile Column Tabs */}
+            {isMobile && (
+                <div className="flex gap-1 bg-sys-bg dark:bg-dark-bg p-1 rounded-xl border border-sys-border dark:border-dark-border overflow-x-auto">
+                    {COLUMNS.map(col => {
+                        const count = tasks.filter(t => t.status === col.id).length;
+                        return (
+                            <button
+                                key={col.id}
+                                onClick={() => setActiveColumn(col.id)}
+                                className={`flex-1 min-w-0 py-2 px-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap
+                                    ${activeColumn === col.id
+                                        ? 'bg-sys-card dark:bg-dark-card shadow-sm text-sys-text-main dark:text-dark-text'
+                                        : 'text-sys-text-sub'
+                                    }`}
+                            >
+                                {col.title}
+                                <span className="ml-1 text-[10px] opacity-60">({count})</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* Kanban Board */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 overflow-hidden">
-                {COLUMNS.map(column => {
+            <div className={`flex-1 grid gap-4 overflow-hidden ${isMobile ? 'grid-cols-1' : 'grid-cols-4'}`}>
+                {columnsToRender.map(column => {
                     const columnTasks = tasks.filter(t => t.status === column.id);
 
                     return (
@@ -137,13 +175,15 @@ const Kanban: React.FC<KanbanProps> = ({ tasks, setTasks }) => {
                                     return (
                                         <div
                                             key={task.id}
-                                            draggable
+                                            draggable={!isMobile}
                                             onDragStart={(e) => handleDragStart(e, task.id)}
                                             onDragEnd={handleDragEnd}
-                                            className={`group bg-sys-bg dark:bg-dark-bg p-3 rounded-xl border border-sys-border dark:border-dark-border hover:shadow-md transition-all cursor-grab active:cursor-grabbing ${draggedTask === task.id ? 'opacity-50' : ''}`}
+                                            className={`group bg-sys-bg dark:bg-dark-bg p-3 rounded-xl border border-sys-border dark:border-dark-border hover:shadow-md transition-all ${!isMobile ? 'cursor-grab active:cursor-grabbing' : ''} ${draggedTask === task.id ? 'opacity-50' : ''}`}
                                         >
                                             <div className="flex items-start gap-2">
-                                                <GripVertical size={16} className="text-sys-text-sub mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                {!isMobile && (
+                                                    <GripVertical size={16} className="text-sys-text-sub mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-medium text-sm text-sys-text-main dark:text-dark-text mb-1 break-words">{task.title}</p>
                                                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${PRIORITY_COLORS[task.priority]}`}>
@@ -152,20 +192,21 @@ const Kanban: React.FC<KanbanProps> = ({ tasks, setTasks }) => {
                                                 </div>
                                                 <button
                                                     onClick={() => deleteTask(task.id)}
-                                                    className="text-sys-text-sub hover:text-calm-coral transition-colors opacity-0 group-hover:opacity-100 p-1"
+                                                    className="text-sys-text-sub hover:text-calm-coral transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1"
                                                 >
                                                     <X size={14} />
                                                 </button>
                                             </div>
 
-                                            {/* Move Buttons */}
-                                            <div className="flex justify-center gap-2 mt-2 pt-2 border-t border-sys-border dark:border-dark-border opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* Move Buttons — always visible on mobile */}
+                                            <div className={`flex justify-center gap-2 mt-2 pt-2 border-t border-sys-border dark:border-dark-border transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                                 {prevStatus && (
                                                     <button
                                                         onClick={() => moveTask(task.id, prevStatus)}
                                                         className="flex items-center gap-1 text-xs text-sys-text-sub hover:text-action-blue transition-colors px-2 py-1 rounded-lg hover:bg-action-blue/10"
                                                     >
                                                         <ChevronLeft size={16} />
+                                                        {isMobile && <span>{COLUMNS.find(c => c.id === prevStatus)?.title}</span>}
                                                     </button>
                                                 )}
                                                 {nextStatus && (
@@ -173,6 +214,7 @@ const Kanban: React.FC<KanbanProps> = ({ tasks, setTasks }) => {
                                                         onClick={() => moveTask(task.id, nextStatus)}
                                                         className="flex items-center gap-1 text-xs text-sys-text-sub hover:text-action-blue transition-colors px-2 py-1 rounded-lg hover:bg-action-blue/10"
                                                     >
+                                                        {isMobile && <span>{COLUMNS.find(c => c.id === nextStatus)?.title}</span>}
                                                         <ChevronRight size={16} />
                                                     </button>
                                                 )}
@@ -183,7 +225,7 @@ const Kanban: React.FC<KanbanProps> = ({ tasks, setTasks }) => {
 
                                 {columnTasks.length === 0 && (
                                     <div className="text-center py-8 text-sys-text-sub text-sm opacity-60">
-                                        Arraste tarefas aqui
+                                        {isMobile ? 'Nenhuma tarefa aqui' : 'Arraste tarefas aqui'}
                                     </div>
                                 )}
                             </div>
@@ -218,12 +260,12 @@ const Kanban: React.FC<KanbanProps> = ({ tasks, setTasks }) => {
 
                             <div>
                                 <label className="block text-xs font-bold text-sys-text-sec dark:text-sys-text-sub mb-2 uppercase tracking-wide">Coluna</label>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap">
                                     {COLUMNS.map(col => (
                                         <button
                                             key={col.id}
                                             onClick={() => setNewTaskColumn(col.id)}
-                                            className={`flex-1 py-2 px-3 rounded-xl text-sm font-semibold transition-colors ${newTaskColumn === col.id
+                                            className={`flex-1 min-w-[70px] py-2 px-2 rounded-xl text-xs md:text-sm font-semibold transition-colors ${newTaskColumn === col.id
                                                 ? 'bg-action-blue text-white'
                                                 : 'bg-sys-bg dark:bg-dark-bg text-sys-text-sub hover:bg-sys-border dark:hover:bg-dark-border'
                                                 }`}
