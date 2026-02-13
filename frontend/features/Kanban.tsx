@@ -11,8 +11,8 @@ interface KanbanProps {
 
 const COLUMNS: { id: KanbanStatus; title: string; color: string }[] = [
     { id: 'todo', title: 'A Fazer', color: 'border-t-terracotta' },
-    { id: 'in-progress', title: 'Em Andamento', color: 'border-t-action-blue' },
-    { id: 'review', title: 'Em Análise', color: 'border-t-soft-lilac' },
+    { id: 'in-progress', title: 'Produzindo', color: 'border-t-action-blue' },
+    { id: 'review', title: 'Validando', color: 'border-t-soft-lilac' },
     { id: 'done', title: 'Concluído', color: 'border-t-org-blue' },
 ];
 
