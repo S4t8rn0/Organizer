@@ -144,13 +144,13 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
 
   return (
     <div className="max-w-4xl mx-auto h-full flex flex-col animate-fade-in">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-sys-text-main dark:text-dark-text mb-2 tracking-tight">Minhas Tarefas</h1>
-        <p className="text-sys-text-sec dark:text-sys-text-sub font-medium">Organize seu dia com calma e clareza.</p>
+      <div className="mb-5 md:mb-7">
+        <h1 className="text-xl md:text-2xl font-bold text-sys-text-main dark:text-dark-text mb-1 md:mb-2 tracking-tight">Minhas Tarefas</h1>
+        <p className="text-sm text-sys-text-sec dark:text-sys-text-sub font-medium">Organize seu dia com calma e clareza.</p>
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleAddTask} className="bg-sys-card dark:bg-dark-card p-4 rounded-2xl shadow-soft border border-sys-border dark:border-dark-border mb-8 flex flex-col gap-4 transition-all focus-within:ring-1 ring-action-blue/50">
+      <form onSubmit={handleAddTask} className="bg-sys-card dark:bg-dark-card p-3 md:p-4 rounded-2xl shadow-soft border border-sys-border dark:border-dark-border mb-5 md:mb-8 flex flex-col gap-3 md:gap-4 transition-all focus-within:ring-1 ring-action-blue/50">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <input
