@@ -158,6 +158,9 @@ const Finance: React.FC<FinanceProps> = ({
   return (
     <div className="h-full flex flex-col gap-6 animate-fade-in max-w-6xl mx-auto overflow-y-auto pb-8">
 
+      {/* Title */}
+      <h2 className="text-xl md:text-2xl font-bold text-sys-text-main dark:text-dark-text tracking-tight pl-2">Finanças</h2>
+
       {/* Header Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-terracotta to-[#E8B08B] text-white p-4 md:p-6 rounded-3xl shadow-soft relative overflow-hidden">
@@ -255,8 +258,9 @@ const Finance: React.FC<FinanceProps> = ({
                   {FINANCE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <button type="submit" className="w-full sm:w-auto bg-sys-text-main dark:bg-white text-white dark:text-dark-bg p-3 rounded-xl transition-colors hover:opacity-90">
-                <Plus size={20} />
+              <button type="submit" className="w-full sm:w-auto bg-action-blue hover:bg-action-blue/90 text-white px-4 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                <Plus size={18} />
+                <span className="sm:hidden">Adicionar</span>
               </button>
             </form>
 
