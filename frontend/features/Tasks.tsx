@@ -143,14 +143,14 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
   };
 
   return (
-    <div className="max-w-4xl mx-auto h-full flex flex-col animate-fade-in">
+    <div className="max-w-4xl mx-auto animate-fade-in">
       <div className="mb-5 md:mb-7">
         <h1 className="text-xl md:text-2xl font-bold text-sys-text-main dark:text-dark-text mb-1 md:mb-2 tracking-tight">Minhas Tarefas</h1>
         <p className="text-sm text-sys-text-sec dark:text-sys-text-sub font-medium">Organize seu dia com calma e clareza.</p>
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleAddTask} className="bg-sys-card dark:bg-dark-card p-3 md:p-4 rounded-2xl shadow-soft border border-sys-border dark:border-dark-border mb-5 md:mb-8 flex flex-col gap-3 md:gap-4 transition-all focus-within:ring-1 ring-action-blue/50">
+      <form onSubmit={handleAddTask} className="bg-sys-card dark:bg-dark-card p-3 md:p-4 rounded-2xl shadow-soft border border-sys-border dark:border-dark-border mb-3 md:mb-8 flex flex-col gap-3 md:gap-4 transition-all focus-within:ring-1 ring-action-blue/50">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <input
@@ -242,7 +242,7 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
       </form>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
+      <div className="flex flex-wrap items-center justify-between mb-3 md:mb-6 gap-3 md:gap-4">
         <div className="flex bg-sys-bg dark:bg-dark-card p-1 rounded-xl border border-sys-border dark:border-dark-border">
           <button
             onClick={() => setFilter('all')}
@@ -278,7 +278,7 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
       </div>
 
       {/* Task List */}
-      <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-3 md:space-y-4">
         {filteredTasks.length === 0 ? (
           <div className="text-center py-16 text-sys-text-sub bg-sys-bg/30 dark:bg-dark-bg/30 rounded-3xl border border-dashed border-sys-border dark:border-dark-border">
             Nenhuma tarefa encontrada.
