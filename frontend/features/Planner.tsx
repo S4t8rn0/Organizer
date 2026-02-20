@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, startOfWeek, addDays, isSameDay, getDay, addWeeks, subWeeks, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, X, Clock, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle, RefreshCw, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Clock, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle, RefreshCw, Pencil, AlertTriangle } from 'lucide-react';
 import { CalendarEvent, Task, Priority } from '../types';
 import { PRIORITY_COLORS } from '../constants';
 
@@ -70,6 +70,9 @@ const Planner: React.FC<PlannerProps> = ({
   const [editPlannerTaskPriority, setEditPlannerTaskPriority] = useState<Priority>('medium');
   const [editPlannerTaskRecurrence, setEditPlannerTaskRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
   const [editPlannerTaskWeekdays, setEditPlannerTaskWeekdays] = useState<number[]>([1]);
+
+  // Delete confirmation state for recurring tasks
+  const [deleteConfirm, setDeleteConfirm] = useState<{ task: Task; dayStr: string } | null>(null);
 
   // Hover state for zoom/blur effect
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
@@ -467,7 +470,13 @@ const Planner: React.FC<PlannerProps> = ({
                               <Pencil size={12} />
                             </button>
                             <button
-                              onClick={() => task.recurrence ? onDeleteTask(task.id, format(day, 'yyyy-MM-dd')) : onDeleteTask(task.id)}
+                              onClick={() => {
+                                if (task.recurrence) {
+                                  setDeleteConfirm({ task, dayStr: format(day, 'yyyy-MM-dd') });
+                                } else {
+                                  onDeleteTask(task.id);
+                                }
+                              }}
                               className="text-sys-text-sub hover:text-calm-coral transition-opacity"
                             >
                               <Trash2 size={12} />
@@ -863,6 +872,49 @@ const Planner: React.FC<PlannerProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal for Recurring Tasks */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-sys-text-main/10 dark:bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-sys-card dark:bg-dark-card rounded-2xl w-full max-w-xs p-6 shadow-xl animate-fade-in border border-sys-border dark:border-dark-border">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-calm-coral/10 rounded-xl">
+                <AlertTriangle size={20} className="text-calm-coral" />
+              </div>
+              <h3 className="text-base font-bold text-sys-text-main dark:text-dark-text">Excluir tarefa</h3>
+            </div>
+            <p className="text-sm text-sys-text-sec dark:text-sys-text-sub mb-5">
+              <span className="font-semibold text-sys-text-main dark:text-dark-text">{deleteConfirm.task.title}</span> é uma tarefa recorrente. O que deseja fazer?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  onDeleteTask(deleteConfirm.task.id, deleteConfirm.dayStr);
+                  setDeleteConfirm(null);
+                }}
+                className="w-full py-2.5 px-4 text-sm font-semibold rounded-xl bg-sys-bg dark:bg-dark-bg text-sys-text-main dark:text-dark-text hover:bg-sys-border dark:hover:bg-dark-border transition-colors border border-sys-border dark:border-dark-border"
+              >
+                Apenas esta ocorrência
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteTask(deleteConfirm.task.id);
+                  setDeleteConfirm(null);
+                }}
+                className="w-full py-2.5 px-4 text-sm font-semibold rounded-xl bg-calm-coral hover:bg-calm-coral/90 text-white transition-colors"
+              >
+                Todas as ocorrências
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="w-full py-2 text-xs font-medium text-sys-text-sub hover:text-sys-text-main dark:hover:text-dark-text transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
