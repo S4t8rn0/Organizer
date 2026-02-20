@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     folder_id TEXT,
     recurrence recurrence_type,
     completed_dates TEXT[] DEFAULT '{}',
+    deleted_dates TEXT[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

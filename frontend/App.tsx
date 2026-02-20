@@ -62,7 +62,7 @@ const App: React.FC = () => {
       ]);
 
       // Convert date strings to Date objects
-      setTasks(tasksData.map((t: any) => ({ ...t, date: parseLocalDate(t.date), completedDates: t.completed_dates || [] })));
+      setTasks(tasksData.map((t: any) => ({ ...t, date: parseLocalDate(t.date), completedDates: t.completed_dates || [], deletedDates: t.deleted_dates || [] })));
       setNotes(notesData.map((n: any) => ({ ...n, updatedAt: new Date(n.updated_at) })));
       setEvents(eventsData.map((e: any) => ({
         ...e,
@@ -148,10 +148,23 @@ const App: React.FC = () => {
       console.error('Error updating task:', error);
     }
   };
-  const deleteTask = async (id: string) => {
+  const deleteTask = async (id: string, date?: string) => {
     try {
-      await tasksApi.delete(id);
-      setTasks(prev => prev.filter(t => t.id !== id));
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      if (task.recurrence && date) {
+        // Recurring task: hide specific date in deletedDates
+        const updated = await tasksApi.delete(id, date);
+        setTasks(prev => prev.map(t => t.id === id ? {
+          ...t,
+          deletedDates: updated.deleted_dates || []
+        } : t));
+      } else {
+        // Non-recurring: fully delete
+        await tasksApi.delete(id);
+        setTasks(prev => prev.filter(t => t.id !== id));
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
     }

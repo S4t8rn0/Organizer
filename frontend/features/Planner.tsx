@@ -24,7 +24,7 @@ interface PlannerProps {
   onAddTask: (task: Omit<Task, 'id'>) => void;
   onUpdateTask: (id: string, data: Partial<Task>) => void;
   onToggleTask: (id: string, date?: string) => void;
-  onDeleteTask: (id: string) => void;
+  onDeleteTask: (id: string, date?: string) => void;
 }
 
 const Planner: React.FC<PlannerProps> = ({
@@ -339,6 +339,9 @@ const Planner: React.FC<PlannerProps> = ({
 
             // Filter Tasks for this day
             const dayTasks = tasks.filter(task => {
+              const dayStr = format(day, 'yyyy-MM-dd');
+              // Filter out tasks that were deleted on this specific date
+              if (task.deletedDates && task.deletedDates.includes(dayStr)) return false;
               if (task.recurrence === 'daily') return true;
               if (task.recurrence === 'weekly') return getDay(task.date) === getDay(day);
               return isSameDay(task.date, day);
@@ -464,7 +467,7 @@ const Planner: React.FC<PlannerProps> = ({
                               <Pencil size={12} />
                             </button>
                             <button
-                              onClick={() => onDeleteTask(task.id)}
+                              onClick={() => task.recurrence ? onDeleteTask(task.id, format(day, 'yyyy-MM-dd')) : onDeleteTask(task.id)}
                               className="text-sys-text-sub hover:text-calm-coral transition-opacity"
                             >
                               <Trash2 size={12} />

@@ -65,7 +65,15 @@ export const tasksApi = {
         method: 'PATCH',
         ...(date ? { body: JSON.stringify({ date }) } : {}),
     }),
-    delete: (id: string) => fetchApi(`/tasks/${id}`, { method: 'DELETE' }),
+    delete: (id: string, date?: string) => {
+        if (date) {
+            return fetchApi<any>(`/tasks/${id}/hide`, {
+                method: 'PATCH',
+                body: JSON.stringify({ date }),
+            });
+        }
+        return fetchApi(`/tasks/${id}`, { method: 'DELETE' });
+    },
 };
 
 // Notes API

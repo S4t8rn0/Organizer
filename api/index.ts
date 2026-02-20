@@ -28,7 +28,7 @@ interface AuthenticatedRequest extends Request {
 
 // Allowed fields for each entity (whitelist approach)
 const ALLOWED_FIELDS = {
-    tasks: ['title', 'completed', 'date', 'priority', 'category', 'folder_id', 'recurrence', 'completed_dates'],
+    tasks: ['title', 'completed', 'date', 'priority', 'category', 'folder_id', 'recurrence', 'completed_dates', 'deleted_dates'],
     notes: ['title', 'content', 'category', 'tags'],
     calendar_events: ['title', 'start_time', 'end_time', 'description', 'color', 'recurring', 'recurrence'],
     kanban_tasks: ['title', 'description', 'status', 'priority'],
@@ -513,6 +513,49 @@ app.patch('/api/tasks/:id/toggle', uuidParamValidation('id'), handleValidation, 
         }
     } catch (error) {
         res.status(500).json({ error: 'Erro ao alternar tarefa' });
+    }
+});
+
+app.patch('/api/tasks/:id/hide', uuidParamValidation('id'), handleValidation, authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const supabaseClient = getSupabaseClient(req.userToken);
+        const { id } = req.params;
+        const { date } = req.body;
+
+        if (!date) {
+            res.status(400).json({ error: 'Data é obrigatória' });
+            return;
+        }
+
+        const { data: task, error: fetchError } = await supabaseClient
+            .from('tasks')
+            .select('deleted_dates, recurrence')
+            .eq('id', id)
+            .eq('user_id', req.userId)
+            .single();
+
+        if (fetchError || !task) {
+            res.status(404).json({ error: 'Tarefa não encontrada' });
+            return;
+        }
+
+        const deletedDates: string[] = task.deleted_dates || [];
+        const updatedDates = deletedDates.includes(date)
+            ? deletedDates
+            : [...deletedDates, date];
+
+        const { data, error } = await supabaseClient
+            .from('tasks')
+            .update({ deleted_dates: updatedDates })
+            .eq('id', id)
+            .eq('user_id', req.userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao ocultar tarefa' });
     }
 });
 

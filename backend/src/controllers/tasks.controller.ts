@@ -107,6 +107,50 @@ export const toggleTask = async (req: AuthenticatedRequest, res: Response) => {
     }
 };
 
+export const hideTask = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const supabase = getSupabaseClient(req.userToken);
+        const { id } = req.params;
+        const { date } = req.body;
+
+        if (!date) {
+            res.status(400).json({ error: 'Data é obrigatória' });
+            return;
+        }
+
+        const { data: task, error: fetchError } = await supabase
+            .from('tasks')
+            .select('deleted_dates, recurrence')
+            .eq('id', id)
+            .eq('user_id', req.userId)
+            .single();
+
+        if (fetchError || !task) {
+            res.status(404).json({ error: 'Tarefa não encontrada' });
+            return;
+        }
+
+        const deletedDates: string[] = task.deleted_dates || [];
+        const updatedDates = deletedDates.includes(date)
+            ? deletedDates
+            : [...deletedDates, date];
+
+        const { data, error } = await supabase
+            .from('tasks')
+            .update({ deleted_dates: updatedDates })
+            .eq('id', id)
+            .eq('user_id', req.userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        console.error('Error hiding task:', error);
+        res.status(500).json({ error: 'Erro ao ocultar tarefa' });
+    }
+};
+
 export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const supabase = getSupabaseClient(req.userToken);
