@@ -43,8 +43,13 @@ const Tasks: React.FC<TasksProps> = ({ tasks, addTask, updateTask, toggleTask, d
 
   const filteredTasks = tasks
     .filter(task => {
-      if (filter === 'completed' && !task.completed) return false;
-      if (filter === 'pending' && task.completed) return false;
+      const dateStr = format(task.date, 'yyyy-MM-dd');
+      const isCompleted = task.recurrence
+        ? (task.completedDates || []).includes(dateStr)
+        : task.completed;
+
+      if (filter === 'completed' && !isCompleted) return false;
+      if (filter === 'pending' && isCompleted) return false;
       if (categoryFilter !== 'All' && task.category !== categoryFilter) return false;
       return true;
     })
